@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useScrollTrigger } from '../hooks/useScrollTrigger';
 import styles from './Gallery.module.css';
@@ -7,16 +7,79 @@ interface GalleryItem {
   id: number;
   title: string;
   category: string;
+  imageUrl?: string;
 }
 
 const galleryItems: GalleryItem[] = [
-  { id: 1, title: 'קוד אחמר', category: 'סדנה' },
-  { id: 2, title: 'הכשרה בשטח', category: 'הכשרה' },
-  { id: 3, title: 'צוות חדש', category: 'מתנדבים' },
-  { id: 4, title: 'אמבולנס חדש', category: 'ציוד' },
-  { id: 5, title: 'פעילות קהילתית', category: 'קהילה' },
-  { id: 6, title: 'תרגיל הצלה', category: 'הכשרה' },
+  { id: 1, title: 'קוד אחמר', category: 'סדנה', imageUrl: 'https://via.placeholder.com/300x200?text=Image+1' },
+  { id: 2, title: 'הכשרה בשטח', category: 'הכשרה', imageUrl: 'https://via.placeholder.com/300x200?text=Image+2' },
+  { id: 3, title: 'צוות חדש', category: 'מתנדבים', imageUrl: 'https://via.placeholder.com/300x200?text=Image+3' },
+  { id: 4, title: 'אמבולנס חדש', category: 'ציוד', imageUrl: 'https://via.placeholder.com/300x200?text=Image+4' },
+  { id: 5, title: 'פעילות קהילתית', category: 'קהילה', imageUrl: 'https://via.placeholder.com/300x200?text=Image+5' },
+  { id: 6, title: 'תרגיל הצלה', category: 'הכשרה', imageUrl: 'https://via.placeholder.com/300x200?text=Image+6' },
 ];
+
+// Custom hook for image lazy loading with Intersection Observer
+const useImageLazyLoad = (ref: React.RefObject<HTMLImageElement | null>) => {
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          const img = ref.current;
+          if (img) {
+            img.src = img.dataset.src || '';
+            img.onload = () => setIsLoaded(true);
+            observer.unobserve(img);
+          }
+        }
+      },
+      { threshold: 0.01 }
+    );
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => {
+      if (ref.current) {
+        observer.unobserve(ref.current);
+      }
+    };
+  }, [ref]);
+
+  return isLoaded;
+};
+
+// Gallery Item Component with Lazy Loading
+const GalleryItemComponent: React.FC<{ item: GalleryItem; variants: any }> = ({ item, variants }) => {
+  const imgRef = useRef<HTMLImageElement>(null);
+  const isLoaded = useImageLazyLoad(imgRef);
+
+  return (
+    <motion.div
+      className={styles.item}
+      variants={variants}
+      whileHover={{ y: -8 }}
+    >
+      <div className={styles.itemImage}>
+        <img
+          ref={imgRef}
+          data-src={item.imageUrl}
+          alt={item.title}
+          className={`${styles.lazyImage} ${isLoaded ? styles.loaded : ''}`}
+          loading="lazy"
+        />
+        {!isLoaded && <div className={styles.placeholder}></div>}
+      </div>
+      <div className={styles.itemInfo}>
+        <p className={styles.itemCategory}>{item.category}</p>
+        <h3 className={styles.itemTitle}>{item.title}</h3>
+      </div>
+    </motion.div>
+  );
+};
 
 const Gallery: React.FC = () => {
   const { ref, isVisible } = useScrollTrigger();
@@ -52,20 +115,7 @@ const Gallery: React.FC = () => {
           animate={isVisible ? 'visible' : 'hidden'}
         >
           {galleryItems.map((item) => (
-            <motion.div
-              key={item.id}
-              className={styles.item}
-              variants={itemVariants}
-              whileHover={{ y: -8 }}
-            >
-              <div className={styles.itemImage}>
-                <div className={styles.placeholder}></div>
-              </div>
-              <div className={styles.itemInfo}>
-                <p className={styles.itemCategory}>{item.category}</p>
-                <h3 className={styles.itemTitle}>{item.title}</h3>
-              </div>
-            </motion.div>
+            <GalleryItemComponent key={item.id} item={item} variants={itemVariants} />
           ))}
         </motion.div>
       </div>

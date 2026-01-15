@@ -1,5 +1,10 @@
 /* Global Styles */
 
+html {
+  direction: rtl;
+  text-align: right;
+}
+
 :root {
   /* Colors from SYSTEM_SPEC */
   --color-primary: #f2561a;
@@ -60,6 +65,7 @@
 html {
   scroll-behavior: smooth;
   font-size: 16px;
+  direction: rtl;
 }
 
 body {
@@ -69,6 +75,8 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  direction: rtl;
+  text-align: right;
 }
 
 /* Typography */
@@ -158,9 +166,12 @@ img {
 /* Utility classes */
 
 .container {
+  width: 100%;
   max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 var(--spacing-lg);
+  margin-right: auto;
+  margin-left: auto;
+  padding-right: var(--spacing-lg);
+  padding-left: var(--spacing-lg);
 }
 
 .section {

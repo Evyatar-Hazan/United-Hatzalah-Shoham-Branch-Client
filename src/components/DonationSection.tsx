@@ -4,22 +4,46 @@ import { useScrollTrigger } from '../hooks/useScrollTrigger';
 import styles from './DonationSection.module.css';
 
 const PRESET_AMOUNTS = [50, 100, 250, 500];
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const DonationSection: React.FC = () => {
   const { ref, isVisible } = useScrollTrigger();
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleDonate = () => {
+  const handleDonate = async () => {
     const amount = selectedAmount || parseFloat(customAmount);
     if (amount > 0) {
-      setShowSuccess(true);
-      setTimeout(() => {
-        setShowSuccess(false);
-        setSelectedAmount(null);
-        setCustomAmount('');
-      }, 3000);
+      setIsLoading(true);
+      try {
+        const response = await fetch(`${API_URL}/api/donations`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            amount,
+            donorName: 'Anonymous',
+            donorEmail: 'donor@example.com',
+            message: 'Thank you for the opportunity to save lives!',
+          }),
+        });
+
+        if (response.ok) {
+          setShowSuccess(true);
+          setTimeout(() => {
+            setShowSuccess(false);
+            setSelectedAmount(null);
+            setCustomAmount('');
+          }, 3000);
+        }
+      } catch (error) {
+        console.error('Donation error:', error);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -86,12 +110,12 @@ const DonationSection: React.FC = () => {
             <motion.button
               className={styles.donateButton}
               onClick={handleDonate}
-              disabled={!selectedAmount && !customAmount}
+              disabled={!selectedAmount && !customAmount || isLoading}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               aria-label="שלח תרומה"
             >
-              תרומה מהרצי
+              {isLoading ? 'שליחה...' : 'תרומה מהרצי'}
             </motion.button>
           </div>
 

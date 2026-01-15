@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useScrollTrigger } from '../hooks/useScrollTrigger';
 import styles from './Stories.module.css';
@@ -11,33 +11,31 @@ interface Story {
   date: string;
 }
 
-const stories: Story[] = [
-  {
-    id: 1,
-    title: 'הצלה במטבח',
-    description:
-      'אדם בן 62 נפל בחצר ביתו. המתנדבים שלנו הגיעו תוך 4 דקות, סיפקו עזרה ראשונה והעבירו אותו בטוח לבית החולים.',
-    date: '15 בינואר 2024',
-  },
-  {
-    id: 2,
-    title: 'נערה צעירה בחנק',
-    description:
-      'קריאה חירום לדירה בשכונת הדר. מתנדב עם הכשרה בעזרה ראשונה בצע טכניקת פרוק חנק וחציא חיי הנערה.',
-    date: '8 בדצמבר 2023',
-  },
-  {
-    id: 3,
-    title: 'גבר בהתקף לב',
-    description:
-      'קריאה בחצות הלילה לגבר בן 55 שסבול התקף לב. המתנדבים השתמשו במכשיר הדיפיברילציה וחזרו את הלב לקצב תקין.',
-    date: '22 בנובמבר 2023',
-  },
-];
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const Stories: React.FC = () => {
   const { ref } = useScrollTrigger();
   const [activeStory, setActiveStory] = useState(0);
+  const [stories, setStories] = useState<Story[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStories = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/media/stories`);
+        if (response.ok) {
+          const result = await response.json();
+          setStories(result.data || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch stories:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStories();
+  }, []);
 
   const nextStory = () => {
     setActiveStory((prev) => (prev + 1) % stories.length);
@@ -46,6 +44,21 @@ const Stories: React.FC = () => {
   const prevStory = () => {
     setActiveStory((prev) => (prev - 1 + stories.length) % stories.length);
   };
+
+  if (loading) {
+    return (
+      <section ref={ref} className={`${styles.stories} section`}>
+        <div className="container">
+          <h2 className={styles.title}>סיפורי הצלה מהשטח</h2>
+          <p>טוען...</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (stories.length === 0) {
+    return null;
+  }
 
   return (
     <section ref={ref} className={`${styles.stories} section`}>

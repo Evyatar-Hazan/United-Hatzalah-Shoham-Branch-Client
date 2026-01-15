@@ -10,14 +10,7 @@ interface GalleryItem {
   imageUrl?: string;
 }
 
-const galleryItems: GalleryItem[] = [
-  { id: 1, title: 'קוד אחמר', category: 'סדנה', imageUrl: 'https://via.placeholder.com/300x200?text=Image+1' },
-  { id: 2, title: 'הכשרה בשטח', category: 'הכשרה', imageUrl: 'https://via.placeholder.com/300x200?text=Image+2' },
-  { id: 3, title: 'צוות חדש', category: 'מתנדבים', imageUrl: 'https://via.placeholder.com/300x200?text=Image+3' },
-  { id: 4, title: 'אמבולנס חדש', category: 'ציוד', imageUrl: 'https://via.placeholder.com/300x200?text=Image+4' },
-  { id: 5, title: 'פעילות קהילתית', category: 'קהילה', imageUrl: 'https://via.placeholder.com/300x200?text=Image+5' },
-  { id: 6, title: 'תרגיל הצלה', category: 'הכשרה', imageUrl: 'https://via.placeholder.com/300x200?text=Image+6' },
-];
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 // Custom hook for image lazy loading with Intersection Observer
 const useImageLazyLoad = (ref: React.RefObject<HTMLImageElement | null>) => {
@@ -89,6 +82,26 @@ const GalleryItemComponent: React.FC<{ item: GalleryItem; variants: any }> = ({
 
 const Gallery: React.FC = () => {
   const { ref, isVisible } = useScrollTrigger();
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchGallery = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/media/gallery`);
+        if (response.ok) {
+          const result = await response.json();
+          setGalleryItems(result.data || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch gallery:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGallery();
+  }, []);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -109,6 +122,17 @@ const Gallery: React.FC = () => {
       transition: { duration: 0.5 },
     },
   };
+
+  if (loading) {
+    return (
+      <section ref={ref} className={`${styles.gallery} section`}>
+        <div className="container">
+          <h2 className={styles.title}>גלריית מדיה</h2>
+          <p>טוען...</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section ref={ref} className={`${styles.gallery} section`}>

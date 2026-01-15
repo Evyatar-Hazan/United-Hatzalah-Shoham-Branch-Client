@@ -1,7 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useScrollTrigger } from '../hooks/useScrollTrigger';
 import styles from './Contact.module.css';
+
+interface ContactInfo {
+  phone: string;
+  email: string;
+  address: string;
+  socialLinks: {
+    facebook: string;
+    instagram: string;
+    whatsapp: string;
+  };
+  emergencyNumber: string;
+  businessHours: {
+    weekday: string;
+    weekend: string;
+  };
+}
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const Contact: React.FC = () => {
   const { ref, isVisible } = useScrollTrigger();
@@ -10,6 +28,25 @@ const Contact: React.FC = () => {
     email: '',
     message: '',
   });
+  const [contactInfo, setContactInfo] = useState<ContactInfo | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+
+  useEffect(() => {
+    const fetchContactInfo = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/contact/info`);
+        if (response.ok) {
+          const result = await response.json();
+          setContactInfo(result.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch contact info:', error);
+      }
+    };
+
+    fetchContactInfo();
+  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -18,12 +55,41 @@ const Contact: React.FC = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission here
-    console.log('Form submitted:', formData);
-    setFormData({ name: '', email: '', message: '' });
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch(`${API_URL}/api/contact`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        setSubmitSuccess(true);
+        setFormData({ name: '', email: '', message: '' });
+        setTimeout(() => setSubmitSuccess(false), 3000);
+      }
+    } catch (error) {
+      console.error('Failed to submit form:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  if (!contactInfo) {
+    return (
+      <section ref={ref} className={`${styles.contact} section`}>
+        <div className="container">
+          <h2 className={styles.title}>יצירת קשר</h2>
+          <p>טוען...</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section ref={ref} className={`${styles.contact} section`}>
@@ -38,28 +104,51 @@ const Contact: React.FC = () => {
           >
             <div className={styles.infoItem}>
               <h3>📞 טלפון</h3>
-              <a href="tel:+972123456789">+972 1-234-567-89</a>
+              <a href={`tel:${contactInfo.phone.replace(/\s/g, '')}`}>
+                {contactInfo.phone}
+              </a>
             </div>
             <div className={styles.infoItem}>
               <h3>📧 דוא״ל</h3>
-              <a href="mailto:info@shoham.united-hatzalah.org">
-                info@shoham.united-hatzalah.org
+              <a href={`mailto:${contactInfo.email}`}>
+                {contactInfo.email}
               </a>
             </div>
             <div className={styles.infoItem}>
               <h3>📍 כתובת</h3>
-              <p>שוהם, ישראל</p>
+              <p>{contactInfo.address}</p>
+            </div>
+            <div className={styles.infoItem}>
+              <h3>🚨 חירום</h3>
+              <a href={`tel:${contactInfo.emergencyNumber}`}>
+                {contactInfo.emergencyNumber}
+              </a>
             </div>
             <div className={styles.socialLinks}>
               <h3>📱 עקב אחרינו</h3>
               <div className={styles.links}>
-                <a href="#" aria-label="פייסבוק">
+                <a 
+                  href={contactInfo.socialLinks.facebook} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  aria-label="פייסבוק"
+                >
                   f
                 </a>
-                <a href="#" aria-label="אינסטגרם">
+                <a 
+                  href={contactInfo.socialLinks.instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="אינסטגרם"
+                >
                   📷
                 </a>
-                <a href="#" aria-label="וואטסאפ">
+                <a 
+                  href={contactInfo.socialLinks.whatsapp}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="וואטסאפ"
+                >
                   💬
                 </a>
               </div>
@@ -112,11 +201,17 @@ const Contact: React.FC = () => {
             <motion.button
               type="submit"
               className={styles.submitButton}
+              disabled={isSubmitting}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              שלח הודעה
+              {isSubmitting ? 'שליחה...' : 'שלח הודעה'}
             </motion.button>
+            {submitSuccess && (
+              <div className={styles.successMessage}>
+                ✓ ההודעה נשלחה בהצלחה!
+              </div>
+            )}
           </motion.form>
         </div>
       </div>

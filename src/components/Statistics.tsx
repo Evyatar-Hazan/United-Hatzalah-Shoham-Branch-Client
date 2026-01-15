@@ -21,7 +21,7 @@ const StatisticItem: React.FC<StatisticItemProps> = ({
   useEffect(() => {
     if (!isVisible) return;
 
-    let start = 0;
+    const start = 0;
     const increment = value / 50;
     let current = start;
 

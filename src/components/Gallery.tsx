@@ -25,7 +25,7 @@ const useImageLazyLoad = (ref: React.RefObject<HTMLImageElement | null>) => {
 
   useEffect(() => {
     const observer = new IntersectionObserver(
-      (entries) => {
+      entries => {
         if (entries[0].isIntersecting) {
           const img = ref.current;
           if (img) {
@@ -38,13 +38,15 @@ const useImageLazyLoad = (ref: React.RefObject<HTMLImageElement | null>) => {
       { threshold: 0.01 }
     );
 
-    if (ref.current) {
-      observer.observe(ref.current);
+    const currentRef = ref.current;
+
+    if (currentRef) {
+      observer.observe(currentRef);
     }
 
     return () => {
-      if (ref.current) {
-        observer.unobserve(ref.current);
+      if (currentRef) {
+        observer.unobserve(currentRef);
       }
     };
   }, [ref]);
@@ -53,7 +55,11 @@ const useImageLazyLoad = (ref: React.RefObject<HTMLImageElement | null>) => {
 };
 
 // Gallery Item Component with Lazy Loading
-const GalleryItemComponent: React.FC<{ item: GalleryItem; variants: any }> = ({ item, variants }) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const GalleryItemComponent: React.FC<{ item: GalleryItem; variants: any }> = ({
+  item,
+  variants,
+}) => {
   const imgRef = useRef<HTMLImageElement>(null);
   const isLoaded = useImageLazyLoad(imgRef);
 

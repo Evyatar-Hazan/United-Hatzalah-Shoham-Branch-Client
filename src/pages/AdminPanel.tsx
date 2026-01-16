@@ -1,0 +1,393 @@
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
+import styles from './AdminPanel.module.css';
+
+interface GalleryItem {
+  id: number;
+  title: string;
+  category: string;
+  imageUrl?: string;
+}
+
+interface Story {
+  id: number;
+  title: string;
+  description: string;
+  date: string;
+}
+
+interface Statistics {
+  volunteersCount: number;
+  emergencyCalls: number;
+  averageResponseTime: string;
+  uptime: number;
+}
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+type EditingItem = GalleryItem | Story | null;
+type FormDataType = Record<string, unknown>;
+
+const AdminPanel: React.FC = () => {
+  const { user, token, logout } = useAuth();
+  const [activeTab, setActiveTab] = useState<'gallery' | 'stories' | 'statistics' | 'contact'>('gallery');
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
+  const [stories, setStories] = useState<Story[]>([]);
+  const [statistics, setStatistics] = useState<Statistics | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [editingItem, setEditingItem] = useState<EditingItem>(null);
+  const [formData, setFormData] = useState<FormDataType>({});
+
+  const fetchData = React.useCallback(async () => {
+    if (!token) return;
+    setLoading(true);
+
+    try {
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      };
+
+      if (activeTab === 'gallery') {
+        const response = await fetch(`${API_URL}/api/admin/gallery`, { headers });
+        const result = await response.json();
+        if (result.success) setGalleryItems(result.data || []);
+      } else if (activeTab === 'stories') {
+        const response = await fetch(`${API_URL}/api/admin/stories`, { headers });
+        const result = await response.json();
+        if (result.success) setStories(result.data || []);
+      } else if (activeTab === 'statistics') {
+        const response = await fetch(`${API_URL}/api/admin/statistics`, { headers });
+        const result = await response.json();
+        if (result.success) setStatistics(result.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [token, activeTab]);
+
+  useEffect(() => {
+    if (!user?.isAdmin) return;
+    fetchData();
+  }, [activeTab, user, token, fetchData]);
+
+  const handleSave = async () => {
+    if (!token || !editingItem) return;
+
+    try {
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      };
+
+      let url = '';
+      let method: 'PUT' | 'POST' = 'PUT';
+      const body = formData;
+
+      if (activeTab === 'gallery') {
+        url = editingItem.id
+          ? `${API_URL}/api/admin/gallery/${editingItem.id}`
+          : `${API_URL}/api/admin/gallery`;
+        method = editingItem.id ? 'PUT' : 'POST';
+      } else if (activeTab === 'stories') {
+        url = editingItem.id
+          ? `${API_URL}/api/admin/stories/${editingItem.id}`
+          : `${API_URL}/api/admin/stories`;
+        method = editingItem.id ? 'PUT' : 'POST';
+      } else if (activeTab === 'statistics') {
+        url = `${API_URL}/api/admin/statistics`;
+        method = 'PUT';
+      }
+
+      const response = await fetch(url, {
+        method,
+        headers,
+        body: JSON.stringify(body),
+      });
+
+      if (response.ok) {
+        alert('נשמר בהצלחה!');
+        setEditingItem(null);
+        setFormData({});
+        fetchData();
+      }
+    } catch (error) {
+      console.error('Failed to save:', error);
+      alert('שגיאה בשמירה');
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!token || !confirm('בטוח שברצונך למחוק?')) return;
+
+    try {
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+      };
+
+      let url = '';
+      if (activeTab === 'gallery') {
+        url = `${API_URL}/api/admin/gallery/${id}`;
+      } else if (activeTab === 'stories') {
+        url = `${API_URL}/api/admin/stories/${id}`;
+      }
+
+      const response = await fetch(url, { method: 'DELETE', headers });
+
+      if (response.ok) {
+        alert('נמחק בהצלחה!');
+        fetchData();
+      }
+    } catch (error) {
+      console.error('Failed to delete:', error);
+      alert('שגיאה במחיקה');
+    }
+  };
+
+  if (!user?.isAdmin) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.unauthorized}>
+          <h2>אתה לא מורשה לגשת לפאנל זה</h2>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <div>
+          <h1>פאנל ניהול</h1>
+          <p>שלום, {user.name}</p>
+        </div>
+        <button onClick={logout} className={styles.logoutBtn}>
+          התנתק
+        </button>
+      </div>
+
+      <div className={styles.tabs}>
+        <button
+          className={activeTab === 'gallery' ? styles.active : ''}
+          onClick={() => setActiveTab('gallery')}
+        >
+          גלריה
+        </button>
+        <button
+          className={activeTab === 'stories' ? styles.active : ''}
+          onClick={() => setActiveTab('stories')}
+        >
+          סיפורים
+        </button>
+        <button
+          className={activeTab === 'statistics' ? styles.active : ''}
+          onClick={() => setActiveTab('statistics')}
+        >
+          סטטיסטיקות
+        </button>
+        <button
+          className={activeTab === 'contact' ? styles.active : ''}
+          onClick={() => setActiveTab('contact')}
+        >
+          יצירת קשר
+        </button>
+      </div>
+
+      <div className={styles.content}>
+        {loading && <div className={styles.loading}>טוען...</div>}
+
+        {activeTab === 'gallery' && !loading && (
+          <div className={styles.section}>
+            <button
+              onClick={() => {
+                setEditingItem({});
+                setFormData({});
+              }}
+              className={styles.addBtn}
+            >
+              + הוסף תמונה
+            </button>
+
+            {editingItem && (
+              <div className={styles.form}>
+                <h3>{editingItem.id ? 'עריכת תמונה' : 'הוספת תמונה חדשה'}</h3>
+                <input
+                  type="text"
+                  placeholder="כותרת"
+                  value={formData.title || ''}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                />
+                <input
+                  type="text"
+                  placeholder="קטגוריה"
+                  value={formData.category || ''}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                />
+                <input
+                  type="text"
+                  placeholder="URL תמונה"
+                  value={formData.imageUrl || ''}
+                  onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                />
+                <div className={styles.formButtons}>
+                  <button onClick={handleSave} className={styles.saveBtn}>
+                    שמור
+                  </button>
+                  <button
+                    onClick={() => setEditingItem(null)}
+                    className={styles.cancelBtn}
+                  >
+                    ביטול
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className={styles.itemsList}>
+              {galleryItems.map((item) => (
+                <div key={item.id} className={styles.item}>
+                  <h4>{item.title}</h4>
+                  <p>{item.category}</p>
+                  <div className={styles.itemButtons}>
+                    <button
+                      onClick={() => {
+                        setEditingItem(item);
+                        setFormData(item);
+                      }}
+                      className={styles.editBtn}
+                    >
+                      עריכה
+                    </button>
+                    <button
+                      onClick={() => handleDelete(item.id)}
+                      className={styles.deleteBtn}
+                    >
+                      מחיקה
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'stories' && !loading && (
+          <div className={styles.section}>
+            <button
+              onClick={() => {
+                setEditingItem({});
+                setFormData({});
+              }}
+              className={styles.addBtn}
+            >
+              + הוסף סיפור
+            </button>
+
+            {editingItem && (
+              <div className={styles.form}>
+                <h3>{editingItem.id ? 'עריכת סיפור' : 'הוספת סיפור חדש'}</h3>
+                <input
+                  type="text"
+                  placeholder="כותרת"
+                  value={formData.title || ''}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                />
+                <textarea
+                  placeholder="תיאור"
+                  value={formData.description || ''}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  rows={4}
+                />
+                <input
+                  type="text"
+                  placeholder="תאריך"
+                  value={formData.date || ''}
+                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                />
+                <div className={styles.formButtons}>
+                  <button onClick={handleSave} className={styles.saveBtn}>
+                    שמור
+                  </button>
+                  <button
+                    onClick={() => setEditingItem(null)}
+                    className={styles.cancelBtn}
+                  >
+                    ביטול
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className={styles.itemsList}>
+              {stories.map((story) => (
+                <div key={story.id} className={styles.item}>
+                  <h4>{story.title}</h4>
+                  <p>{story.description.substring(0, 100)}...</p>
+                  <p className={styles.date}>{story.date}</p>
+                  <div className={styles.itemButtons}>
+                    <button
+                      onClick={() => {
+                        setEditingItem(story);
+                        setFormData(story);
+                      }}
+                      className={styles.editBtn}
+                    >
+                      עריכה
+                    </button>
+                    <button
+                      onClick={() => handleDelete(story.id)}
+                      className={styles.deleteBtn}
+                    >
+                      מחיקה
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'statistics' && !loading && statistics && (
+          <div className={styles.section}>
+            <h3>עדכון סטטיסטיקות</h3>
+            <div className={styles.form}>
+              <input
+                type="number"
+                placeholder="מספר מתנדבים"
+                value={formData.volunteersCount || statistics.volunteersCount}
+                onChange={(e) => setFormData({ ...formData, volunteersCount: parseInt(e.target.value) })}
+              />
+              <input
+                type="number"
+                placeholder="קריאות חירום"
+                value={formData.emergencyCalls || statistics.emergencyCalls}
+                onChange={(e) => setFormData({ ...formData, emergencyCalls: parseInt(e.target.value) })}
+              />
+              <input
+                type="text"
+                placeholder="זמן תגובה ממוצע"
+                value={formData.averageResponseTime || statistics.averageResponseTime}
+                onChange={(e) => setFormData({ ...formData, averageResponseTime: e.target.value })}
+              />
+              <input
+                type="number"
+                placeholder="זמינות %"
+                value={formData.uptime || statistics.uptime}
+                onChange={(e) => setFormData({ ...formData, uptime: parseFloat(e.target.value) })}
+              />
+              <div className={styles.formButtons}>
+                <button onClick={handleSave} className={styles.saveBtn}>
+                  שמור
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default AdminPanel;

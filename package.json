@@ -12,7 +12,9 @@
     "prepare": "husky install"
   },
   "dependencies": {
+    "cloudinary": "^2.9.0",
     "framer-motion": "^12.26.2",
+    "next-cloudinary": "^6.17.5",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.12.0"

@@ -7,6 +7,8 @@ interface GalleryItem {
   title: string;
   category: string;
   imageUrl?: string;
+  cloudinaryId?: string;
+  [key: string]: string | number | boolean | undefined;
 }
 
 interface Story {
@@ -14,6 +16,7 @@ interface Story {
   title: string;
   description: string;
   date: string;
+  [key: string]: string | number;
 }
 
 interface Statistics {
@@ -25,8 +28,8 @@ interface Statistics {
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-type EditingItem = GalleryItem | Story | null;
-type FormDataType = Record<string, unknown>;
+type EditingItem = GalleryItem | Story | Record<string, unknown> | null;
+type FormDataType = Record<string, string | undefined>;
 
 const AdminPanel: React.FC = () => {
   const { user, token, logout } = useAuth();
@@ -37,6 +40,8 @@ const AdminPanel: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [editingItem, setEditingItem] = useState<EditingItem>(null);
   const [formData, setFormData] = useState<FormDataType>({});
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const fetchData = React.useCallback(async () => {
     if (!token) return;
@@ -146,6 +151,49 @@ const AdminPanel: React.FC = () => {
     }
   };
 
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !token) return;
+
+    setUploadingImage(true);
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('image', file);
+      formDataToSend.append('folder', activeTab);
+
+      const response = await fetch(`${API_URL}/api/admin/upload-image`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formDataToSend,
+      });
+
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        // Set the uploaded image URL in the form
+        setFormData({
+          ...formData,
+          imageUrl: result.data.url,
+          cloudinaryId: result.data.publicId,
+        });
+        alert('תמונה הועלתה בהצלחה!');
+      } else {
+        alert(`שגיאה בהעלאה: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Upload failed:', error);
+      alert('שגיאה בהעלאת תמונה');
+    } finally {
+      setUploadingImage(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   if (!user?.isAdmin) {
     return (
       <div className={styles.container}>
@@ -225,12 +273,41 @@ const AdminPanel: React.FC = () => {
                   value={formData.category || ''}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                 />
+                
+                {/* Image Upload Section */}
+                <div className={styles.imageUploadSection}>
+                  <label>תמונה:</label>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    disabled={uploadingImage}
+                    style={{ display: 'block', marginBottom: '0.5rem' }}
+                  />
+                  {uploadingImage && <p style={{ color: '#f2561a' }}>מעלה תמונה...</p>}
+                </div>
+
+                {/* Display uploaded image */}
+                {formData.imageUrl && (
+                  <div className={styles.imagePreview}>
+                    <img
+                      src={String(formData.imageUrl)}
+                      alt="Preview"
+                      style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '8px' }}
+                    />
+                    <small>URL: {String(formData.imageUrl).substring(0, 50)}...</small>
+                  </div>
+                )}
+
+                {/* Fallback: Manual URL input */}
                 <input
                   type="text"
-                  placeholder="URL תמונה"
+                  placeholder="או הכנס URL ידני"
                   value={formData.imageUrl || ''}
                   onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
                 />
+                
                 <div className={styles.formButtons}>
                   <button onClick={handleSave} className={styles.saveBtn}>
                     שמור
@@ -254,7 +331,11 @@ const AdminPanel: React.FC = () => {
                     <button
                       onClick={() => {
                         setEditingItem(item);
-                        setFormData(item);
+                        setFormData({
+                          title: item.title,
+                          category: item.category,
+                          imageUrl: item.imageUrl || '',
+                        });
                       }}
                       className={styles.editBtn}
                     >
@@ -330,7 +411,11 @@ const AdminPanel: React.FC = () => {
                     <button
                       onClick={() => {
                         setEditingItem(story);
-                        setFormData(story);
+                        setFormData({
+                          title: story.title,
+                          description: story.description,
+                          date: story.date,
+                        });
                       }}
                       className={styles.editBtn}
                     >
@@ -356,26 +441,26 @@ const AdminPanel: React.FC = () => {
               <input
                 type="number"
                 placeholder="מספר מתנדבים"
-                value={formData.volunteersCount || statistics.volunteersCount}
-                onChange={(e) => setFormData({ ...formData, volunteersCount: parseInt(e.target.value) })}
+                value={formData.volunteersCount || statistics?.volunteersCount || ''}
+                onChange={(e) => setFormData({ ...formData, volunteersCount: e.target.value })}
               />
               <input
                 type="number"
                 placeholder="קריאות חירום"
-                value={formData.emergencyCalls || statistics.emergencyCalls}
-                onChange={(e) => setFormData({ ...formData, emergencyCalls: parseInt(e.target.value) })}
+                value={formData.emergencyCalls || statistics?.emergencyCalls || ''}
+                onChange={(e) => setFormData({ ...formData, emergencyCalls: e.target.value })}
               />
               <input
                 type="text"
                 placeholder="זמן תגובה ממוצע"
-                value={formData.averageResponseTime || statistics.averageResponseTime}
+                value={formData.averageResponseTime || statistics?.averageResponseTime || ''}
                 onChange={(e) => setFormData({ ...formData, averageResponseTime: e.target.value })}
               />
               <input
                 type="number"
                 placeholder="זמינות %"
-                value={formData.uptime || statistics.uptime}
-                onChange={(e) => setFormData({ ...formData, uptime: parseFloat(e.target.value) })}
+                value={formData.uptime || statistics?.uptime || ''}
+                onChange={(e) => setFormData({ ...formData, uptime: e.target.value })}
               />
               <div className={styles.formButtons}>
                 <button onClick={handleSave} className={styles.saveBtn}>

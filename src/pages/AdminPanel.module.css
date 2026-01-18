@@ -167,6 +167,46 @@
   box-shadow: 0 0 0 3px rgba(242, 86, 26, 0.1);
 }
 
+.imageUploadSection {
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #fff;
+  border-radius: 6px;
+  border: 2px dashed #f2561a;
+}
+
+.imageUploadSection label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #1a1a18;
+}
+
+.imageUploadSection input[type='file'] {
+  cursor: pointer;
+  width: 100%;
+}
+
+.imagePreview {
+  margin: 15px 0;
+  padding: 15px;
+  background: #f5f5f5;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.imagePreview img {
+  display: inline-block;
+  margin-bottom: 10px;
+}
+
+.imagePreview small {
+  display: block;
+  color: #666;
+  word-break: break-all;
+  font-size: 0.85rem;
+}
+
 .formButtons {
   display: flex;
   gap: 10px;

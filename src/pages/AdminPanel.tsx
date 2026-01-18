@@ -112,15 +112,19 @@ const AdminPanel: React.FC = () => {
         body: JSON.stringify(body),
       });
 
-      if (response.ok) {
+      const result = await response.json();
+
+      if (response.ok && result.success) {
         alert('נשמר בהצלחה!');
         setEditingItem(null);
         setFormData({});
         fetchData();
+      } else {
+        alert(`שגיאה: ${result.error || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Failed to save:', error);
-      alert('שגיאה בשמירה');
+      alert(`שגיאה בשמירה: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 

@@ -329,6 +329,13 @@ const AdminPanel: React.FC = () => {
             <div className={styles.itemsList}>
               {galleryItems.map((item) => (
                 <div key={item.id} className={styles.item}>
+                  {item.imageUrl && (
+                    <img
+                      src={item.imageUrl}
+                      alt={item.title}
+                      className={styles.itemImage}
+                    />
+                  )}
                   <h4>{item.title}</h4>
                   <p>{item.category}</p>
                   <div className={styles.itemButtons}>

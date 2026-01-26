@@ -75,6 +75,13 @@ const Stories: React.FC = () => {
               exit={{ opacity: 0, x: -50 }}
               transition={{ duration: 0.5 }}
             >
+              {stories[activeStory].image && (
+                <img
+                  src={stories[activeStory].image}
+                  alt={stories[activeStory].title}
+                  className={styles.storyImage}
+                />
+              )}
               <div className={styles.storyContent}>
                 <h3 className={styles.storyTitle}>
                   {stories[activeStory].title}

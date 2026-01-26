@@ -335,6 +335,11 @@ const AdminPanel: React.FC = () => {
             ...formData,
             picture: result.data.url,
           });
+        } else if (activeTab === 'stories') {
+          setFormData({
+            ...formData,
+            image: result.data.url,
+          });
         } else {
           setFormData({
             ...formData,
@@ -403,16 +408,16 @@ const AdminPanel: React.FC = () => {
           סטטיסטיקות
         </button>
         <button
-          className={activeTab === 'gallery' ? styles.active : ''}
-          onClick={() => setActiveTab('gallery')}
-        >
-          גלריה
-        </button>
-        <button
           className={activeTab === 'stories' ? styles.active : ''}
           onClick={() => setActiveTab('stories')}
         >
           סיפורים
+        </button>
+        <button
+          className={activeTab === 'gallery' ? styles.active : ''}
+          onClick={() => setActiveTab('gallery')}
+        >
+          גלריה
         </button>
         <button
           className={activeTab === 'contact' ? styles.active : ''}
@@ -585,6 +590,33 @@ const AdminPanel: React.FC = () => {
                   value={formData.date || ''}
                   onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                 />
+
+                {/* Image Upload Section */}
+                <div className={styles.imageUploadSection}>
+                  <label>תמונה (אופציונלי):</label>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    disabled={uploadingImage}
+                    style={{ display: 'block', marginBottom: '0.5rem' }}
+                  />
+                  {uploadingImage && <p style={{ color: '#f2561a' }}>מעלה תמונה...</p>}
+                </div>
+
+                {/* Display uploaded image */}
+                {formData.image && (
+                  <div className={styles.imagePreview}>
+                    <img
+                      src={String(formData.image)}
+                      alt="Preview"
+                      style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '8px' }}
+                    />
+                    <small>URL: {String(formData.image).substring(0, 50)}...</small>
+                  </div>
+                )}
+
                 <div className={styles.formButtons}>
                   <button onClick={handleSave} className={styles.saveBtn}>
                     שמור
@@ -602,6 +634,13 @@ const AdminPanel: React.FC = () => {
             <div className={styles.itemsList}>
               {stories.map((story) => (
                 <div key={story.id} className={styles.item}>
+                  {story.image && (
+                    <img
+                      src={story.image}
+                      alt={story.title}
+                      className={styles.itemImage}
+                    />
+                  )}
                   <h4>{story.title}</h4>
                   <p>{story.description.substring(0, 100)}...</p>
                   <p className={styles.date}>{story.date}</p>
@@ -613,6 +652,7 @@ const AdminPanel: React.FC = () => {
                           title: story.title,
                           description: story.description,
                           date: story.date,
+                          image: story.image || '',
                         });
                       }}
                       className={styles.editBtn}

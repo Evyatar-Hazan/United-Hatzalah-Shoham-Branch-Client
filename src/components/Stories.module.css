@@ -15,6 +15,10 @@
   padding: 3rem;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   overflow-x: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .storyCard {
@@ -24,6 +28,9 @@
   align-items: flex-start;
   justify-content: center;
   gap: 2rem;
+  width: 100%;
+  position: relative;
+  z-index: 1;
 }
 
 .storyImage {
@@ -72,13 +79,16 @@
 }
 
 .controls {
+  position: absolute;
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 2rem;
-  margin-top: 2rem;
-  padding-top: 2rem;
-  border-top: 1px solid #eee;
+  justify-content: space-between;
+  padding: 0 2rem;
+  pointer-events: none;
+  top: 0;
+  left: 0;
 }
 
 .navButton {
@@ -97,6 +107,8 @@
   box-shadow: 0 4px 16px rgba(242, 86, 26, 0.3);
   font-weight: 500;
   letter-spacing: -0.5px;
+  pointer-events: auto;
+  flex-shrink: 0;
 }
 
 .navButton:hover {
@@ -116,6 +128,11 @@
 .indicators {
   display: flex;
   gap: 0.75rem;
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: auto;
 }
 
 .indicator {
@@ -148,6 +165,7 @@
 
   .carousel {
     padding: 2rem;
+    padding-bottom: 4rem;
   }
 
   .storyCard {
@@ -175,13 +193,29 @@
   }
 
   .controls {
-    gap: 1rem;
+    flex-direction: row;
+    padding: 0 1rem;
+    height: auto;
+    position: relative;
+    width: 100%;
+    margin-top: 1rem;
+    border-top: 1px solid #eee;
+    padding-top: 1rem;
+  }
+
+  .indicators {
+    position: static;
+    transform: none;
+    bottom: auto;
+    justify-content: center;
+    width: 100%;
   }
 }
 
 @media (max-width: 480px) {
   .carousel {
     padding: 1.5rem;
+    padding-bottom: 4rem;
   }
 
   .storyCard {
@@ -206,12 +240,21 @@
   }
 
   .controls {
-    gap: 0.75rem;
+    padding: 1rem 1rem;
+    position: relative;
+    flex-direction: row;
   }
 
   .navButton {
     width: 40px;
     height: 40px;
     font-size: 1rem;
+  }
+
+  .indicators {
+    position: static;
+    transform: none;
+    justify-content: center;
+    width: 100%;
   }
 }

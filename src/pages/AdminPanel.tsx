@@ -3,36 +3,43 @@ import { useAuth } from '../context/AuthContext';
 import styles from './AdminPanel.module.css';
 
 interface GalleryItem {
-  id: number;
+  id: string;
   title: string;
   category: string;
-  imageUrl?: string;
-  cloudinaryId?: string;
-  [key: string]: string | number | boolean | undefined;
+  imageUrl: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface Story {
-  id: number;
+  id: string;
   title: string;
   description: string;
   date: string;
-  [key: string]: string | number;
+  image?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface Statistics {
+  id?: string;
   volunteersCount: number;
   emergencyCalls: number;
-  averageResponseTime: string;
+  averageResponseTime: number;
   uptime: number;
+  lastUpdated?: string;
 }
 
 interface ContactMessage {
   id: string;
   name: string;
   email: string;
+  phone?: string | null;
+  subject: string;
   message: string;
-  timestamp: string;
-  status: 'received' | 'read' | 'replied';
+  status: 'pending' | 'read' | 'replied';
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface ContactInfo {
@@ -65,9 +72,10 @@ interface Donation {
   amount: number;
   donorName: string;
   donorEmail: string;
-  message?: string;
-  timestamp: string;
+  message: string | null;
   status: 'pending' | 'completed' | 'failed';
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface Donor {
@@ -563,40 +571,44 @@ const AdminPanel: React.FC = () => {
           </div>
         )}
 
-        {activeTab === 'statistics' && !loading && statistics && (
+        {activeTab === 'statistics' && !loading && (
           <div className={styles.section}>
             <h3>עדכון סטטיסטיקות</h3>
-            <div className={styles.form}>
-              <input
-                type="number"
-                placeholder="מספר מתנדבים"
-                value={formData.volunteersCount || statistics?.volunteersCount || ''}
-                onChange={(e) => setFormData({ ...formData, volunteersCount: e.target.value })}
-              />
-              <input
-                type="number"
-                placeholder="קריאות חירום"
-                value={formData.emergencyCalls || statistics?.emergencyCalls || ''}
-                onChange={(e) => setFormData({ ...formData, emergencyCalls: e.target.value })}
-              />
-              <input
-                type="text"
-                placeholder="זמן תגובה ממוצע"
-                value={formData.averageResponseTime || statistics?.averageResponseTime || ''}
-                onChange={(e) => setFormData({ ...formData, averageResponseTime: e.target.value })}
-              />
-              <input
-                type="number"
-                placeholder="זמינות %"
-                value={formData.uptime || statistics?.uptime || ''}
-                onChange={(e) => setFormData({ ...formData, uptime: e.target.value })}
-              />
-              <div className={styles.formButtons}>
-                <button onClick={handleSave} className={styles.saveBtn}>
-                  שמור
-                </button>
+            {!statistics ? (
+              <p className={styles.emptyState}>אין סטטיסטיקות זמינות</p>
+            ) : (
+              <div className={styles.form}>
+                <input
+                  type="number"
+                  placeholder="מספר מתנדבים"
+                  value={formData.volunteersCount || statistics?.volunteersCount || ''}
+                  onChange={(e) => setFormData({ ...formData, volunteersCount: e.target.value })}
+                />
+                <input
+                  type="number"
+                  placeholder="קריאות חירום"
+                  value={formData.emergencyCalls || statistics?.emergencyCalls || ''}
+                  onChange={(e) => setFormData({ ...formData, emergencyCalls: e.target.value })}
+                />
+                <input
+                  type="text"
+                  placeholder="זמן תגובה ממוצע"
+                  value={formData.averageResponseTime || statistics?.averageResponseTime || ''}
+                  onChange={(e) => setFormData({ ...formData, averageResponseTime: e.target.value })}
+                />
+                <input
+                  type="number"
+                  placeholder="זמינות %"
+                  value={formData.uptime || statistics?.uptime || ''}
+                  onChange={(e) => setFormData({ ...formData, uptime: e.target.value })}
+                />
+                <div className={styles.formButtons}>
+                  <button onClick={handleSave} className={styles.saveBtn}>
+                    שמור
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
 
@@ -629,7 +641,7 @@ const AdminPanel: React.FC = () => {
                         <div className={styles.messageHeader}>
                           <h4>{msg.name}</h4>
                           <span className={`${styles.statusBadge} ${styles[msg.status]}`}>
-                            {msg.status === 'received' && 'התקבל'}
+                            {msg.status === 'pending' && 'בהמתנה'}
                             {msg.status === 'read' && 'נקרא'}
                             {msg.status === 'replied' && 'נענה'}
                           </span>
@@ -637,7 +649,7 @@ const AdminPanel: React.FC = () => {
                         <p className={styles.messageEmail}>{msg.email}</p>
                         <p className={styles.messageText}>{msg.message}</p>
                         <p className={styles.messageTime}>
-                          {new Date(msg.timestamp).toLocaleString('he-IL')}
+                          {new Date(msg.createdAt || '').toLocaleString('he-IL')}
                         </p>
                       </div>
                     ))}
@@ -876,7 +888,7 @@ const AdminPanel: React.FC = () => {
                           סכום: ₪{donation.amount}
                         </p>
                         <p className={styles.adminAddedBy}>
-                          תאריך: {new Date(donation.timestamp).toLocaleDateString('he-IL')}
+                          תאריך: {new Date(donation.createdAt || '').toLocaleDateString('he-IL')}
                         </p>
                         {donation.message && (
                           <p className={styles.adminAddedBy}>

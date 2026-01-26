@@ -36,20 +36,9 @@ const LoginPage: React.FC = () => {
   const handleMockLogin = React.useCallback(async () => {
     setError(null);
     try {
-      // Mock JWT token for local development
-      // Format: header.payload.signature (signature is fake)
-      const header = btoa(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
-      const payload = btoa(JSON.stringify({
-        email: 'EvyatarHazan3.14@gmail.com',
-        name: 'Evyatar Hazan',
-        picture: 'https://via.placeholder.com/150',
-        email_verified: true,
-        iat: Math.floor(Date.now() / 1000),
-        exp: Math.floor(Date.now() / 1000) + 3600,
-      }));
-      const signature = 'mock_signature_for_dev_only';
-      const mockToken = `${header}.${payload}.${signature}`;
-      await login(mockToken);
+      // Use the email address from seed data
+      const mockEmail = 'admin@shoham.united-hatzalah.org.il';
+      await login(mockEmail);
       navigate('/admin');
     } catch (err) {
       setError('נכשל בהתחברות. אנא נסה שוב.');

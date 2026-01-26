@@ -45,12 +45,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (credential: string) => {
     try {
+      // For Google OAuth, credential is the JWT ID token
+      // We need to send it to verify endpoint first to get user info
       const response = await fetch(`${API_URL}/api/auth/google-verify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ token: credential }),
+        // Extract user info from Google JWT or send the credential for verification
+        // For now, treat credential as email for mock login
+        body: JSON.stringify({ 
+          email: credential,
+          name: credential.split('@')[0],
+          picture: ''
+        }),
       });
 
       if (!response.ok) {
@@ -61,11 +69,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (result.success && result.data) {
         const userData = result.data;
-        setToken(credential);
+        // Store email as token since we use it for Bearer auth
+        const authToken = userData.email;
+        setToken(authToken);
         setUser(userData);
         
         // Save to localStorage
-        localStorage.setItem('authToken', credential);
+        localStorage.setItem('authToken', authToken);
         localStorage.setItem('authUser', JSON.stringify(userData));
       }
     } catch (error) {

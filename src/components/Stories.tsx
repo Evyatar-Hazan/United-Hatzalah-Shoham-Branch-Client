@@ -85,44 +85,56 @@ const Stories: React.FC = () => {
         <h2 className={styles.title}>סיפורי הצלה מהשטח</h2>
 
         <div className={styles.carousel}>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={stories[activeStory].id}
-              className={styles.storyCard}
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
-              transition={{ duration: 0.5 }}
-            >
-              {stories[activeStory].image && (
-                <img
-                  src={stories[activeStory].image}
-                  alt={stories[activeStory].title}
-                  className={styles.storyImage}
-                />
-              )}
-              <div className={styles.storyContent}>
-                <h3 className={styles.storyTitle}>
-                  {stories[activeStory].title}
-                </h3>
-                <p className={styles.storyDescription}>
-                  {stories[activeStory].description}
-                </p>
-                <time className={styles.storyDate}>
-                  {stories[activeStory].date}
-                </time>
-              </div>
-            </motion.div>
-          </AnimatePresence>
+          <div className={styles.carouselContent}>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={stories[activeStory].id}
+                className={styles.storyCard}
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -50 }}
+                transition={{ duration: 0.5 }}
+              >
+                {stories[activeStory].image && (
+                  <img
+                    src={stories[activeStory].image}
+                    alt={stories[activeStory].title}
+                    className={styles.storyImage}
+                  />
+                )}
+                <div className={styles.storyContent}>
+                  <h3 className={styles.storyTitle}>
+                    {stories[activeStory].title}
+                  </h3>
+                  <p className={styles.storyDescription}>
+                    {stories[activeStory].description}
+                  </p>
+                  <time className={styles.storyDate}>
+                    {stories[activeStory].date}
+                  </time>
+                </div>
+              </motion.div>
+            </AnimatePresence>
 
-          <div className={styles.controls}>
-            <button
-              className={styles.navButton}
-              onClick={prevStory}
-              aria-label="סיפור קודם"
-            >
-              ❮
-            </button>
+            <div className={styles.controls}>
+              <button
+                className={styles.navButton}
+                onClick={prevStory}
+                aria-label="סיפור קודם"
+              >
+                ❮
+              </button>
+              <button
+                className={styles.navButton}
+                onClick={nextStory}
+                aria-label="סיפור הבא"
+              >
+                ❯
+              </button>
+            </div>
+          </div>
+
+          <div className={styles.controlsBottom}>
             <div className={styles.indicators}>
               {getVisibleIndicators().map((index) => (
                 <button
@@ -136,13 +148,6 @@ const Stories: React.FC = () => {
                 />
               ))}
             </div>
-            <button
-              className={styles.navButton}
-              onClick={nextStory}
-              aria-label="סיפור הבא"
-            >
-              ❯
-            </button>
           </div>
         </div>
       </div>

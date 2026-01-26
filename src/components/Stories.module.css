@@ -21,6 +21,16 @@
   position: relative;
 }
 
+.carouselContent {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 0 60px;
+  overflow: hidden;
+}
+
 .storyCard {
   min-height: 0;
   display: flex;
@@ -33,6 +43,7 @@
   z-index: 1;
   flex: 1;
   overflow: hidden;
+  max-height: 100%;
 }
 
 .storyImage {
@@ -84,16 +95,28 @@
 }
 
 .controls {
-  position: static;
+  position: absolute;
+  width: 100%;
+  height: calc(100% - 4rem);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0;
+  pointer-events: none;
+  top: 2rem;
+  left: 0;
+  flex-shrink: 0;
+}
+
+.controlsBottom {
+  position: relative;
   width: 100%;
   height: auto;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   padding: 1rem 0 0 0;
   pointer-events: all;
-  top: auto;
-  left: auto;
   flex-shrink: 0;
 }
 
@@ -101,31 +124,31 @@
   background: linear-gradient(90deg, rgba(242, 86, 26, 0.7) 0%, rgba(242, 86, 26, 0.4) 100%);
   color: white;
   border: none;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  font-size: 1.25rem;
+  width: 50px;
+  height: 100%;
+  border-radius: 0;
+  font-size: 1.5rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px rgba(242, 86, 26, 0.3);
+  box-shadow: none;
   font-weight: 500;
   letter-spacing: -0.5px;
   pointer-events: auto;
   flex-shrink: 0;
-  backdrop-filter: none;
+  backdrop-filter: blur(4px);
 }
 
 .navButton:hover {
-  background: linear-gradient(90deg, rgba(242, 86, 26, 0.9) 0%, rgba(242, 86, 26, 0.7) 100%);
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(242, 86, 26, 0.4);
+  background: linear-gradient(90deg, rgba(242, 86, 26, 0.85) 0%, rgba(242, 86, 26, 0.6) 100%);
+  transform: none;
+  box-shadow: none;
 }
 
 .navButton:active {
-  transform: scale(0.98);
+  transform: none;
 }
 
 .navButton:focus-visible {
@@ -136,14 +159,8 @@
 .indicators {
   display: flex;
   gap: 0.5rem;
-  position: static;
-  transform: none;
-  bottom: auto;
   justify-content: center;
-  width: auto;
   pointer-events: auto;
-  flex: 1;
-  margin: 0 1rem;
 }
 
 .indicator {
@@ -178,6 +195,10 @@
     height: 500px;
   }
 
+  .carouselContent {
+    padding: 0;
+  }
+
   .storyCard {
     min-height: 0;
     flex-direction: column;
@@ -205,12 +226,14 @@
   }
 
   .controls {
-    flex-direction: column;
-    padding: 1rem 0 0 0;
-    height: auto;
     position: static;
+    flex-direction: row;
+    padding: 0;
+    height: auto;
     width: 100%;
     margin-top: 0;
+    justify-content: center;
+    gap: 1rem;
   }
 
   .navButton {
@@ -219,20 +242,19 @@
     padding: 0;
     font-size: 1.2rem;
     background: #f2561a;
+    border-radius: 50%;
   }
 
   .navButton:hover {
     background: #ff6b35;
   }
 
+  .controlsBottom {
+    padding: 0.75rem 0 0 0;
+  }
+
   .indicators {
-    position: static;
-    transform: none;
-    bottom: auto;
-    justify-content: center;
-    width: 100%;
-    padding: 0.75rem 0;
-    margin: 0;
+    gap: 0.4rem;
   }
 }
 
@@ -240,6 +262,10 @@
   .carousel {
     padding: 1rem;
     height: 550px;
+  }
+
+  .carouselContent {
+    padding: 0;
   }
 
   .storyCard {
@@ -265,9 +291,11 @@
   }
 
   .controls {
-    padding: 0.75rem 0 0 0;
     position: static;
-    flex-direction: column;
+    flex-direction: row;
+    padding: 0;
+    justify-content: center;
+    gap: 0.75rem;
   }
 
   .navButton {
@@ -275,13 +303,14 @@
     height: 32px;
     padding: 0;
     font-size: 1rem;
+    border-radius: 50%;
+  }
+
+  .controlsBottom {
+    padding: 0.5rem 0 0 0;
   }
 
   .indicators {
-    position: static;
-    transform: none;
-    justify-content: center;
-    width: 100%;
-    padding: 0.5rem 0;
+    gap: 0.35rem;
   }
 }

@@ -20,7 +20,7 @@ const Donors: React.FC = () => {
   useEffect(() => {
     const fetchDonors = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/admin/donors`);
+        const response = await fetch(`${API_URL}/api/donors`);
         const result = await response.json();
         if (result.success && result.data) {
           setDonors(result.data);

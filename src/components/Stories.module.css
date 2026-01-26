@@ -66,33 +66,15 @@
   flex-direction: column;
   justify-content: flex-start;
   padding-top: 0;
-  overflow-y: auto;
   padding-right: 0.5rem;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(242, 86, 26, 0.3) transparent;
-}
-
-.storyContent::-webkit-scrollbar {
-  width: 6px;
-}
-
-.storyContent::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.storyContent::-webkit-scrollbar-thumb {
-  background: rgba(242, 86, 26, 0.3);
-  border-radius: 3px;
-}
-
-.storyContent::-webkit-scrollbar-thumb:hover {
-  background: rgba(242, 86, 26, 0.5);
+  overflow: hidden;
 }
 
 .storyTitle {
   font-size: 1.875rem;
   color: #f2561a;
   margin-bottom: 1rem;
+  flex-shrink: 0;
 }
 
 .storyDescription {
@@ -104,6 +86,28 @@
   word-wrap: break-word;
   overflow-wrap: break-word;
   white-space: normal;
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(242, 86, 26, 0.3) transparent;
+}
+
+.storyDescription::-webkit-scrollbar {
+  width: 6px;
+}
+
+.storyDescription::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.storyDescription::-webkit-scrollbar-thumb {
+  background: rgba(242, 86, 26, 0.3);
+  border-radius: 3px;
+}
+
+.storyDescription::-webkit-scrollbar-thumb:hover {
+  background: rgba(242, 86, 26, 0.5);
 }
 
 .storyDate {
@@ -111,6 +115,7 @@
   font-size: 0.95rem;
   color: #999;
   font-weight: 600;
+  flex-shrink: 0;
 }
 
 .controls {

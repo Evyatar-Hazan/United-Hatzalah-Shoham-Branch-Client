@@ -60,14 +60,24 @@ interface Admin {
   addedBy?: string;
 }
 
+interface Donation {
+  id: string;
+  amount: number;
+  donorName: string;
+  donorEmail: string;
+  message?: string;
+  timestamp: string;
+  status: 'pending' | 'completed' | 'failed';
+}
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-type EditingItem = GalleryItem | Story | Admin | Record<string, unknown> | null;
+type EditingItem = GalleryItem | Story | Admin | Donation | Record<string, unknown> | null;
 type FormDataType = Record<string, string | undefined>;
 
 const AdminPanel: React.FC = () => {
   const { user, token, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<'gallery' | 'stories' | 'statistics' | 'contact' | 'admins'>('gallery');
+  const [activeTab, setActiveTab] = useState<'gallery' | 'stories' | 'statistics' | 'contact' | 'admins' | 'donations'>('gallery');
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [stories, setStories] = useState<Story[]>([]);
   const [statistics, setStatistics] = useState<Statistics | null>(null);
@@ -75,6 +85,7 @@ const AdminPanel: React.FC = () => {
   const [contactInfo, setContactInfo] = useState<ContactInfo | null>(null);
   const [contactSubTab, setContactSubTab] = useState<'messages' | 'info'>('messages');
   const [admins, setAdmins] = useState<Admin[]>([]);
+  const [donations, setDonations] = useState<Donation[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingItem, setEditingItem] = useState<EditingItem>(null);
   const [formData, setFormData] = useState<FormDataType>({});
@@ -119,6 +130,10 @@ const AdminPanel: React.FC = () => {
         const response = await fetch(`${API_URL}/api/admin/admins`, { headers });
         const result = await response.json();
         if (result.success) setAdmins(result.data || []);
+      } else if (activeTab === 'donations') {
+        const response = await fetch(`${API_URL}/api/admin/donations`, { headers });
+        const result = await response.json();
+        if (result.success) setDonations(result.data || []);
       }
     } catch (error) {
       console.error('Failed to fetch data:', error);
@@ -163,6 +178,9 @@ const AdminPanel: React.FC = () => {
           ? `${API_URL}/api/admin/admins/${editingItem.id}`
           : `${API_URL}/api/admin/admins`;
         method = editingItem.id ? 'PUT' : 'POST';
+      } else if (activeTab === 'donations') {
+        url = `${API_URL}/api/admin/donations/${editingItem.id}`;
+        method = 'PUT';
       }
 
       const response = await fetch(url, {
@@ -202,6 +220,8 @@ const AdminPanel: React.FC = () => {
         url = `${API_URL}/api/admin/stories/${id}`;
       } else if (activeTab === 'admins') {
         url = `${API_URL}/api/admin/admins/${id}`;
+      } else if (activeTab === 'donations') {
+        url = `${API_URL}/api/admin/donations/${id}`;
       }
 
       const response = await fetch(url, { method: 'DELETE', headers });
@@ -311,6 +331,12 @@ const AdminPanel: React.FC = () => {
           onClick={() => setActiveTab('admins')}
         >
           ניהול אדמינים
+        </button>
+        <button
+          className={activeTab === 'donations' ? styles.active : ''}
+          onClick={() => setActiveTab('donations')}
+        >
+          תורמים וחסויות
         </button>
       </div>
 
@@ -800,6 +826,95 @@ const AdminPanel: React.FC = () => {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {activeTab === 'donations' && !loading && (
+          <div className={styles.section}>
+            <h3>ניהול תורמים וחסויות</h3>
+            <div className={styles.adminsList}>
+              <h3>רשימת תורמים ({donations.length})</h3>
+              {donations.length === 0 ? (
+                <p className={styles.emptyState}>אין תורמים כרגע</p>
+              ) : (
+                <div className={styles.grid}>
+                  {donations.map((donation) => (
+                    <div key={donation.id} className={styles.card}>
+                      <div className={styles.adminHeader}>
+                        <div>
+                          <h4>{donation.donorName}</h4>
+                          <p className={styles.adminEmail}>{donation.donorEmail}</p>
+                        </div>
+                      </div>
+                      <div className={styles.adminInfo}>
+                        <p className={styles.adminDate}>
+                          סכום: ₪{donation.amount}
+                        </p>
+                        <p className={styles.adminAddedBy}>
+                          תאריך: {new Date(donation.timestamp).toLocaleDateString('he-IL')}
+                        </p>
+                        {donation.message && (
+                          <p className={styles.adminAddedBy}>
+                            הערה: {donation.message}
+                          </p>
+                        )}
+                        <p className={styles.adminAddedBy}>
+                          סטטוס: {donation.status}
+                        </p>
+                      </div>
+                      <div className={styles.actions}>
+                        <button
+                          onClick={() => {
+                            setEditingItem(donation);
+                            setFormData({
+                              status: donation.status,
+                            });
+                          }}
+                          className={styles.editBtn}
+                        >
+                          ערוך סטטוס
+                        </button>
+                        <button
+                          onClick={() => handleDelete(donation.id)}
+                          className={styles.deleteBtn}
+                        >
+                          מחק
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {editingItem && activeTab === 'donations' && (
+              <div className={styles.form}>
+                <h3>עדכון סטטוס תרומה</h3>
+                <select
+                  value={formData.status || 'completed'}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                  style={{ width: '100%', padding: '12px', marginBottom: '15px', borderRadius: '6px', border: '1px solid #d0d0c8' }}
+                >
+                  <option value="pending">ממתין</option>
+                  <option value="completed">הושלם</option>
+                  <option value="failed">נכשל</option>
+                </select>
+                <div className={styles.formButtons}>
+                  <button onClick={handleSave} className={styles.saveBtn}>
+                    שמור
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingItem(null);
+                      setFormData({});
+                    }}
+                    className={styles.cancelBtn}
+                  >
+                    ביטול
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

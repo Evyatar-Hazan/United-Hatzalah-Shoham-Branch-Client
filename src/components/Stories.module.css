@@ -12,7 +12,7 @@
 .carousel {
   background: white;
   border-radius: 1rem;
-  padding: 2rem;
+  padding: 2rem 0;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   display: flex;
@@ -27,7 +27,7 @@
   align-items: center;
   justify-content: center;
   position: relative;
-  padding: 0 60px;
+  padding: 0 70px;
   overflow: hidden;
 }
 
@@ -97,13 +97,13 @@
 .controls {
   position: absolute;
   width: 100%;
-  height: calc(100% - 4rem);
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0;
   pointer-events: none;
-  top: 2rem;
+  top: 0;
   left: 0;
   flex-shrink: 0;
 }
@@ -124,7 +124,7 @@
   background: linear-gradient(90deg, rgba(242, 86, 26, 0.7) 0%, rgba(242, 86, 26, 0.4) 100%);
   color: white;
   border: none;
-  width: 50px;
+  width: 60px;
   height: 100%;
   border-radius: 0;
   font-size: 1.5rem;
@@ -139,6 +139,14 @@
   pointer-events: auto;
   flex-shrink: 0;
   backdrop-filter: blur(4px);
+}
+
+.navButton:first-child {
+  border-radius: 1rem 0 0 1rem;
+}
+
+.navButton:last-child {
+  border-radius: 0 1rem 1rem 0;
 }
 
 .navButton:hover {

@@ -51,20 +51,30 @@ interface ContactInfo {
   };
 }
 
+interface Admin {
+  id: string;
+  email: string;
+  name: string;
+  picture?: string;
+  addedAt: string;
+  addedBy?: string;
+}
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-type EditingItem = GalleryItem | Story | Record<string, unknown> | null;
+type EditingItem = GalleryItem | Story | Admin | Record<string, unknown> | null;
 type FormDataType = Record<string, string | undefined>;
 
 const AdminPanel: React.FC = () => {
   const { user, token, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<'gallery' | 'stories' | 'statistics' | 'contact'>('gallery');
+  const [activeTab, setActiveTab] = useState<'gallery' | 'stories' | 'statistics' | 'contact' | 'admins'>('gallery');
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [stories, setStories] = useState<Story[]>([]);
   const [statistics, setStatistics] = useState<Statistics | null>(null);
   const [contactMessages, setContactMessages] = useState<ContactMessage[]>([]);
   const [contactInfo, setContactInfo] = useState<ContactInfo | null>(null);
   const [contactSubTab, setContactSubTab] = useState<'messages' | 'info'>('messages');
+  const [admins, setAdmins] = useState<Admin[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingItem, setEditingItem] = useState<EditingItem>(null);
   const [formData, setFormData] = useState<FormDataType>({});
@@ -105,6 +115,10 @@ const AdminPanel: React.FC = () => {
         
         if (messagesResult.success) setContactMessages(messagesResult.data || []);
         if (infoResult.success) setContactInfo(infoResult.data);
+      } else if (activeTab === 'admins') {
+        const response = await fetch(`${API_URL}/api/admin/admins`, { headers });
+        const result = await response.json();
+        if (result.success) setAdmins(result.data || []);
       }
     } catch (error) {
       console.error('Failed to fetch data:', error);
@@ -144,6 +158,11 @@ const AdminPanel: React.FC = () => {
       } else if (activeTab === 'statistics') {
         url = `${API_URL}/api/admin/statistics`;
         method = 'PUT';
+      } else if (activeTab === 'admins') {
+        url = editingItem.id
+          ? `${API_URL}/api/admin/admins/${editingItem.id}`
+          : `${API_URL}/api/admin/admins`;
+        method = editingItem.id ? 'PUT' : 'POST';
       }
 
       const response = await fetch(url, {
@@ -168,7 +187,7 @@ const AdminPanel: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: number | string) => {
     if (!token || !confirm('בטוח שברצונך למחוק?')) return;
 
     try {
@@ -181,6 +200,8 @@ const AdminPanel: React.FC = () => {
         url = `${API_URL}/api/admin/gallery/${id}`;
       } else if (activeTab === 'stories') {
         url = `${API_URL}/api/admin/stories/${id}`;
+      } else if (activeTab === 'admins') {
+        url = `${API_URL}/api/admin/admins/${id}`;
       }
 
       const response = await fetch(url, { method: 'DELETE', headers });
@@ -284,6 +305,12 @@ const AdminPanel: React.FC = () => {
           onClick={() => setActiveTab('contact')}
         >
           יצירת קשר
+        </button>
+        <button
+          className={activeTab === 'admins' ? styles.active : ''}
+          onClick={() => setActiveTab('admins')}
+        >
+          ניהול אדמינים
         </button>
       </div>
 
@@ -661,6 +688,118 @@ const AdminPanel: React.FC = () => {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {activeTab === 'admins' && !loading && (
+          <div className={styles.section}>
+            <button
+              onClick={() => {
+                setEditingItem({});
+                setFormData({});
+              }}
+              className={styles.addBtn}
+            >
+              + הוסף אדמין
+            </button>
+
+            {editingItem && (
+              <div className={styles.form}>
+                <h3>{editingItem.id ? 'עריכת אדמין' : 'הוספת אדמין חדש'}</h3>
+                <input
+                  type="email"
+                  placeholder="אימייל (נדרש לצורך כניסה)"
+                  value={formData.email || ''}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="שם מלא"
+                  value={formData.name || ''}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                />
+                <input
+                  type="url"
+                  placeholder="קישור לתמונה (אופציונלי)"
+                  value={formData.picture || ''}
+                  onChange={(e) => setFormData({ ...formData, picture: e.target.value })}
+                />
+                <div className={styles.formButtons}>
+                  <button onClick={handleSave} className={styles.saveBtn}>
+                    שמור
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingItem(null);
+                      setFormData({});
+                    }}
+                    className={styles.cancelBtn}
+                  >
+                    ביטול
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className={styles.adminsList}>
+              <h3>רשימת אדמינים ({admins.length})</h3>
+              {admins.length === 0 ? (
+                <p className={styles.emptyState}>אין אדמינים</p>
+              ) : (
+                <div className={styles.grid}>
+                  {admins.map((admin) => (
+                    <div key={admin.id} className={styles.card}>
+                      <div className={styles.adminHeader}>
+                        {admin.picture && (
+                          <img 
+                            src={admin.picture} 
+                            alt={admin.name}
+                            className={styles.adminPhoto}
+                          />
+                        )}
+                        <div>
+                          <h4>{admin.name}</h4>
+                          <p className={styles.adminEmail}>{admin.email}</p>
+                        </div>
+                      </div>
+                      <div className={styles.adminInfo}>
+                        <p className={styles.adminDate}>
+                          נוסף ב: {new Date(admin.addedAt).toLocaleDateString('he-IL')}
+                        </p>
+                        {admin.addedBy && (
+                          <p className={styles.adminAddedBy}>
+                            על ידי: {admin.addedBy}
+                          </p>
+                        )}
+                      </div>
+                      <div className={styles.actions}>
+                        <button
+                          onClick={() => {
+                            setEditingItem(admin);
+                            setFormData({
+                              email: admin.email,
+                              name: admin.name,
+                              picture: admin.picture || '',
+                            });
+                          }}
+                          className={styles.editBtn}
+                        >
+                          ערוך
+                        </button>
+                        <button
+                          onClick={() => handleDelete(admin.id)}
+                          className={styles.deleteBtn}
+                        >
+                          מחק
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

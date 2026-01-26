@@ -32,6 +32,7 @@
 }
 
 .storyCard {
+  min-height: 0;
   display: flex;
   flex-direction: row;
   align-items: flex-start;
@@ -41,7 +42,8 @@
   position: relative;
   z-index: 1;
   flex: 1;
-  min-height: 0;
+  overflow: hidden;
+  max-height: 100%;
 }
 
 .storyImage {
@@ -84,8 +86,9 @@
   word-wrap: break-word;
   overflow-wrap: break-word;
   white-space: normal;
-  flex: 1;
   overflow-y: auto;
+  flex: 1;
+  min-height: 0;
   padding-right: 0.5rem;
   scrollbar-width: thin;
   scrollbar-color: rgba(242, 86, 26, 0.3) transparent;
@@ -114,6 +117,8 @@
   color: #999;
   font-weight: 600;
   flex-shrink: 0;
+  margin-top: auto;
+  padding-top: 1rem;
 }
 
 .controls {

@@ -26,14 +26,16 @@
   gap: 0.75rem;
 }
 
-.section a {
+.section a,
+.adminLink {
   color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
   transition: color 300ms ease-in-out;
   font-size: 0.95rem;
 }
 
-.section a:hover {
+.section a:hover,
+.adminLink:hover {
   color: #f2561a;
   text-decoration: underline;
 }

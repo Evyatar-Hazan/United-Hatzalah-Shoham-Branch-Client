@@ -376,3 +376,124 @@
     width: 100%;
   }
 }
+
+/* Contact Tab Styles */
+.contactSubTabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 25px;
+  border-bottom: 2px solid #e0e0e0;
+  padding-bottom: 0;
+}
+
+.contactSubTabs button {
+  padding: 12px 20px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: #666;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.contactSubTabs button:hover {
+  color: #f2561a;
+}
+
+.contactSubTabs button.active {
+  color: #f2561a;
+  border-bottom-color: #f2561a;
+}
+
+.messagesSection,
+.contactInfoSection {
+  margin-top: 20px;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 40px 20px;
+  color: #999;
+  font-size: 1.1rem;
+  background: #f9f9f7;
+  border-radius: 8px;
+}
+
+.messagesList {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.messageCard {
+  background: #f9f9f7;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  transition: all 0.3s ease;
+}
+
+.messageCard:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.messageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.messageHeader h4 {
+  margin: 0;
+  color: #1a1a18;
+  font-size: 1.1rem;
+}
+
+.statusBadge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.statusBadge.received {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.statusBadge.read {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.statusBadge.replied {
+  background: #e8f5e9;
+  color: #388e3c;
+}
+
+.messageEmail {
+  color: #666;
+  font-size: 0.9rem;
+  margin: 5px 0;
+}
+
+.messageText {
+  color: #333;
+  margin: 15px 0;
+  line-height: 1.6;
+  padding: 12px;
+  background: white;
+  border-radius: 6px;
+}
+
+.messageTime {
+  color: #999;
+  font-size: 0.85rem;
+  margin: 5px 0 0 0;
+  text-align: left;
+}
+

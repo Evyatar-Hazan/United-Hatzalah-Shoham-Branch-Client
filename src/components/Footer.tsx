@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import styles from './Footer.module.css';
 
 const Footer: React.FC = () => {
@@ -49,6 +50,15 @@ const Footer: React.FC = () => {
               </li>
               <li>
                 <a href="#volunteer">הצטרף כמתנדב</a>
+              </li>
+            </ul>
+          </div>
+
+          <div className={styles.section}>
+            <h3>ניהול</h3>
+            <ul>
+              <li>
+                <Link to="/admin" className={styles.adminLink}>פאנל ניהול</Link>
               </li>
             </ul>
           </div>

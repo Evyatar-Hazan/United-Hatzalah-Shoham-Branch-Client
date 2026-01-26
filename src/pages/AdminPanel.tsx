@@ -26,6 +26,31 @@ interface Statistics {
   uptime: number;
 }
 
+interface ContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  message: string;
+  timestamp: string;
+  status: 'received' | 'read' | 'replied';
+}
+
+interface ContactInfo {
+  phone: string;
+  email: string;
+  address: string;
+  socialLinks: {
+    facebook: string;
+    instagram: string;
+    whatsapp: string;
+  };
+  emergencyNumber: string;
+  businessHours: {
+    weekday: string;
+    weekend: string;
+  };
+}
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 type EditingItem = GalleryItem | Story | Record<string, unknown> | null;
@@ -37,6 +62,9 @@ const AdminPanel: React.FC = () => {
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [stories, setStories] = useState<Story[]>([]);
   const [statistics, setStatistics] = useState<Statistics | null>(null);
+  const [contactMessages, setContactMessages] = useState<ContactMessage[]>([]);
+  const [contactInfo, setContactInfo] = useState<ContactInfo | null>(null);
+  const [contactSubTab, setContactSubTab] = useState<'messages' | 'info'>('messages');
   const [loading, setLoading] = useState(false);
   const [editingItem, setEditingItem] = useState<EditingItem>(null);
   const [formData, setFormData] = useState<FormDataType>({});
@@ -65,6 +93,18 @@ const AdminPanel: React.FC = () => {
         const response = await fetch(`${API_URL}/api/admin/statistics`, { headers });
         const result = await response.json();
         if (result.success) setStatistics(result.data);
+      } else if (activeTab === 'contact') {
+        // Fetch both contact messages and contact info
+        const [messagesResponse, infoResponse] = await Promise.all([
+          fetch(`${API_URL}/api/admin/contact-messages`, { headers }),
+          fetch(`${API_URL}/api/admin/contact-info`, { headers })
+        ]);
+        
+        const messagesResult = await messagesResponse.json();
+        const infoResult = await infoResponse.json();
+        
+        if (messagesResult.success) setContactMessages(messagesResult.data || []);
+        if (infoResult.success) setContactInfo(infoResult.data);
       }
     } catch (error) {
       console.error('Failed to fetch data:', error);
@@ -479,6 +519,148 @@ const AdminPanel: React.FC = () => {
                 </button>
               </div>
             </div>
+          </div>
+        )}
+
+        {activeTab === 'contact' && !loading && (
+          <div className={styles.section}>
+            <div className={styles.contactSubTabs}>
+              <button
+                className={contactSubTab === 'messages' ? styles.active : ''}
+                onClick={() => setContactSubTab('messages')}
+              >
+                הודעות ({contactMessages.length})
+              </button>
+              <button
+                className={contactSubTab === 'info' ? styles.active : ''}
+                onClick={() => setContactSubTab('info')}
+              >
+                פרטי קשר
+              </button>
+            </div>
+
+            {contactSubTab === 'messages' && (
+              <div className={styles.messagesSection}>
+                <h3>הודעות יצירת קשר</h3>
+                {contactMessages.length === 0 ? (
+                  <p className={styles.emptyState}>אין הודעות כרגע</p>
+                ) : (
+                  <div className={styles.messagesList}>
+                    {contactMessages.map((msg) => (
+                      <div key={msg.id} className={styles.messageCard}>
+                        <div className={styles.messageHeader}>
+                          <h4>{msg.name}</h4>
+                          <span className={`${styles.statusBadge} ${styles[msg.status]}`}>
+                            {msg.status === 'received' && 'התקבל'}
+                            {msg.status === 'read' && 'נקרא'}
+                            {msg.status === 'replied' && 'נענה'}
+                          </span>
+                        </div>
+                        <p className={styles.messageEmail}>{msg.email}</p>
+                        <p className={styles.messageText}>{msg.message}</p>
+                        <p className={styles.messageTime}>
+                          {new Date(msg.timestamp).toLocaleString('he-IL')}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {contactSubTab === 'info' && contactInfo && (
+              <div className={styles.contactInfoSection}>
+                <h3>עדכון פרטי קשר</h3>
+                <div className={styles.form}>
+                  <input
+                    type="text"
+                    placeholder="טלפון"
+                    value={formData.phone || contactInfo?.phone || ''}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  />
+                  <input
+                    type="email"
+                    placeholder="אימייל"
+                    value={formData.email || contactInfo?.email || ''}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  />
+                  <input
+                    type="text"
+                    placeholder="כתובת"
+                    value={formData.address || contactInfo?.address || ''}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  />
+                  <input
+                    type="text"
+                    placeholder="מספר חירום"
+                    value={formData.emergencyNumber || contactInfo?.emergencyNumber || ''}
+                    onChange={(e) => setFormData({ ...formData, emergencyNumber: e.target.value })}
+                  />
+                  
+                  <h4 style={{ marginTop: '1rem' }}>רשתות חברתיות</h4>
+                  <input
+                    type="text"
+                    placeholder="Facebook"
+                    value={formData.facebook || contactInfo?.socialLinks?.facebook || ''}
+                    onChange={(e) => setFormData({ ...formData, facebook: e.target.value })}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Instagram"
+                    value={formData.instagram || contactInfo?.socialLinks?.instagram || ''}
+                    onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
+                  />
+                  <input
+                    type="text"
+                    placeholder="WhatsApp"
+                    value={formData.whatsapp || contactInfo?.socialLinks?.whatsapp || ''}
+                    onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                  />
+                  
+                  <div className={styles.formButtons}>
+                    <button 
+                      onClick={async () => {
+                        if (!token) return;
+                        try {
+                          const response = await fetch(`${API_URL}/api/admin/contact-info`, {
+                            method: 'PUT',
+                            headers: {
+                              'Authorization': `Bearer ${token}`,
+                              'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                              phone: formData.phone || contactInfo?.phone,
+                              email: formData.email || contactInfo?.email,
+                              address: formData.address || contactInfo?.address,
+                              emergencyNumber: formData.emergencyNumber || contactInfo?.emergencyNumber,
+                              socialLinks: {
+                                facebook: formData.facebook || contactInfo?.socialLinks?.facebook || '',
+                                instagram: formData.instagram || contactInfo?.socialLinks?.instagram || '',
+                                whatsapp: formData.whatsapp || contactInfo?.socialLinks?.whatsapp || '',
+                              },
+                            }),
+                          });
+                          const result = await response.json();
+                          if (result.success) {
+                            alert('פרטי הקשר עודכנו בהצלחה!');
+                            setFormData({});
+                            fetchData();
+                          } else {
+                            alert(`שגיאה: ${result.error}`);
+                          }
+                        } catch (error) {
+                          console.error('Failed to save contact info:', error);
+                          alert('שגיאה בשמירת פרטי הקשר');
+                        }
+                      }}
+                      className={styles.saveBtn}
+                    >
+                      שמור
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

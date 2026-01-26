@@ -197,6 +197,13 @@ const AdminPanel: React.FC = () => {
           unit: formData.unit || undefined,
           order: Number.isFinite(parsedOrder) ? parsedOrder : 0,
         };
+      } else if (activeTab === 'stories') {
+        body = {
+          title: formData.title || '',
+          description: formData.description || '',
+          date: formData.date || '',
+          image: formData.image || undefined,
+        };
       }
 
       if (activeTab === 'gallery') {

@@ -85,39 +85,40 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 2rem;
+  padding: 0;
   pointer-events: none;
   top: 0;
   left: 0;
 }
 
 .navButton {
-  background: linear-gradient(135deg, #f2561a 0%, #ff6b35 100%);
+  background: linear-gradient(90deg, rgba(242, 86, 26, 0.7) 0%, rgba(242, 86, 26, 0.4) 100%);
   color: white;
   border: none;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  font-size: 1.25rem;
+  width: 60px;
+  height: 100%;
+  border-radius: 0;
+  font-size: 2rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 16px rgba(242, 86, 26, 0.3);
+  box-shadow: none;
   font-weight: 500;
   letter-spacing: -0.5px;
   pointer-events: auto;
   flex-shrink: 0;
+  backdrop-filter: blur(2px);
 }
 
 .navButton:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(242, 86, 26, 0.4);
+  background: linear-gradient(90deg, rgba(242, 86, 26, 0.9) 0%, rgba(242, 86, 26, 0.6) 100%);
+  transform: none;
 }
 
 .navButton:active {
-  transform: translateY(-1px);
+  transform: none;
 }
 
 .navButton:focus-visible {
@@ -136,25 +137,25 @@
 }
 
 .indicator {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: #ddd;
-  border: 2px solid #eee;
+  background: rgba(255, 255, 255, 0.6);
+  border: none;
   cursor: pointer;
   transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .indicator:hover {
-  background: #ccc;
-  transform: scale(1.2);
+  background: rgba(255, 255, 255, 0.8);
+  transform: scale(1.3);
 }
 
 .indicator.active {
   background: #f2561a;
   border-color: #f2561a;
-  transform: scale(1.4);
-  box-shadow: 0 0 12px rgba(242, 86, 26, 0.4);
+  transform: scale(1.2);
+  box-shadow: 0 0 8px rgba(242, 86, 26, 0.6);
 }
 
 @media (max-width: 768px) {
@@ -194,13 +195,23 @@
 
   .controls {
     flex-direction: row;
-    padding: 0 1rem;
+    padding: 0;
     height: auto;
     position: relative;
     width: 100%;
     margin-top: 1rem;
-    border-top: 1px solid #eee;
-    padding-top: 1rem;
+  }
+
+  .navButton {
+    width: 50px;
+    height: auto;
+    padding: 1rem 0;
+    font-size: 1.5rem;
+    background: transparent;
+  }
+
+  .navButton:hover {
+    background: transparent;
   }
 
   .indicators {
@@ -209,6 +220,7 @@
     bottom: auto;
     justify-content: center;
     width: 100%;
+    padding: 1rem 0;
   }
 }
 
@@ -240,15 +252,15 @@
   }
 
   .controls {
-    padding: 1rem 1rem;
+    padding: 0;
     position: relative;
     flex-direction: row;
   }
 
   .navButton {
-    width: 40px;
-    height: 40px;
-    font-size: 1rem;
+    width: 45px;
+    padding: 0.5rem 0;
+    font-size: 1.25rem;
   }
 
   .indicators {
@@ -256,5 +268,6 @@
     transform: none;
     justify-content: center;
     width: 100%;
+    padding: 0.75rem 0;
   }
 }

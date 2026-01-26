@@ -45,6 +45,25 @@ const Stories: React.FC = () => {
     setActiveStory((prev) => (prev - 1 + stories.length) % stories.length);
   };
 
+  // Get limited indicators to show (first, last, and active page range)
+  const getVisibleIndicators = () => {
+    const maxIndicators = 5;
+    if (stories.length <= maxIndicators) {
+      return Array.from({ length: stories.length }, (_, i) => i);
+    }
+
+    const indices = new Set<number>();
+    indices.add(0); // First
+    indices.add(stories.length - 1); // Last
+    indices.add(activeStory); // Current
+
+    // Add neighbors around current
+    if (activeStory > 0) indices.add(activeStory - 1);
+    if (activeStory < stories.length - 1) indices.add(activeStory + 1);
+
+    return Array.from(indices).sort((a, b) => a - b);
+  };
+
   if (loading) {
     return (
       <section ref={ref} className={`${styles.stories} section`}>
@@ -105,7 +124,7 @@ const Stories: React.FC = () => {
               ❮
             </button>
             <div className={styles.indicators}>
-              {stories.map((_, index) => (
+              {getVisibleIndicators().map((index) => (
                 <button
                   key={index}
                   className={`${styles.indicator} ${
@@ -113,6 +132,7 @@ const Stories: React.FC = () => {
                   }`}
                   onClick={() => setActiveStory(index)}
                   aria-label={`עבור לסיפור ${index + 1}`}
+                  title={`סיפור ${index + 1}`}
                 />
               ))}
             </div>

@@ -185,7 +185,17 @@ const AdminPanel: React.FC = () => {
 
       let url = '';
       let method: 'PUT' | 'POST' = 'PUT';
-      const body = formData;
+          let body: Record<string, unknown> = formData;
+
+        // Convert formData to proper types for statistics
+        if (activeTab === 'statistics') {
+          body = {
+            volunteersCount: parseInt(formData.volunteersCount || '0'),
+            emergencyCalls: parseInt(formData.emergencyCalls || '0'),
+            averageResponseTime: parseInt(formData.averageResponseTime || '0'),
+            uptime: parseFloat(formData.uptime || '0'),
+          };
+        }
 
       if (activeTab === 'gallery') {
         url = editingItem.id
@@ -269,6 +279,8 @@ const AdminPanel: React.FC = () => {
         url = `${API_URL}/api/admin/stories/${id}`;
       } else if (activeTab === 'admins') {
         url = `${API_URL}/api/admin/admins/${id}`;
+        } else if (activeTab === 'statistics') {
+          url = `${API_URL}/api/admin/statistics/${id}`;
       } else if (activeTab === 'donations') {
         url = `${API_URL}/api/admin/donations/${id}`;
       } else if (activeTab === 'sponsors') {
@@ -380,6 +392,12 @@ const AdminPanel: React.FC = () => {
           ניהול אדמינים
         </button>
         <button
+          className={activeTab === 'statistics' ? styles.active : ''}
+          onClick={() => setActiveTab('statistics')}
+        >
+          סטטיסטיקות
+        </button>
+        <button
           className={activeTab === 'gallery' ? styles.active : ''}
           onClick={() => setActiveTab('gallery')}
         >
@@ -390,12 +408,6 @@ const AdminPanel: React.FC = () => {
           onClick={() => setActiveTab('stories')}
         >
           סיפורים
-        </button>
-        <button
-          className={activeTab === 'statistics' ? styles.active : ''}
-          onClick={() => setActiveTab('statistics')}
-        >
-          סטטיסטיקות
         </button>
         <button
           className={activeTab === 'contact' ? styles.active : ''}
@@ -617,40 +629,146 @@ const AdminPanel: React.FC = () => {
 
         {activeTab === 'statistics' && !loading && (
           <div className={styles.section}>
-            <h3>עדכון סטטיסטיקות</h3>
+            <h3>ניהול סטטיסטיקות</h3>
+            
             {!statistics ? (
-              <p className={styles.emptyState}>אין סטטיסטיקות זמינות</p>
+              <div>
+                <p className={styles.emptyState}>אין סטטיסטיקות זמינות</p>
+                <button
+                  onClick={() => {
+                    setEditingItem({});
+                    setFormData({
+                      volunteersCount: '0',
+                      emergencyCalls: '0',
+                      averageResponseTime: '0',
+                      uptime: '0',
+                    });
+                  }}
+                  className={styles.addBtn}
+                  style={{ marginTop: '1rem' }}
+                >
+                  + צור סטטיסטיקות חדשות
+                </button>
+              </div>
             ) : (
-              <div className={styles.form}>
-                <input
-                  type="number"
-                  placeholder="מספר מתנדבים"
-                  value={formData.volunteersCount || statistics?.volunteersCount || ''}
-                  onChange={(e) => setFormData({ ...formData, volunteersCount: e.target.value })}
-                />
-                <input
-                  type="number"
-                  placeholder="קריאות חירום"
-                  value={formData.emergencyCalls || statistics?.emergencyCalls || ''}
-                  onChange={(e) => setFormData({ ...formData, emergencyCalls: e.target.value })}
-                />
-                <input
-                  type="text"
-                  placeholder="זמן תגובה ממוצע"
-                  value={formData.averageResponseTime || statistics?.averageResponseTime || ''}
-                  onChange={(e) => setFormData({ ...formData, averageResponseTime: e.target.value })}
-                />
-                <input
-                  type="number"
-                  placeholder="זמינות %"
-                  value={formData.uptime || statistics?.uptime || ''}
-                  onChange={(e) => setFormData({ ...formData, uptime: e.target.value })}
-                />
-                <div className={styles.formButtons}>
-                  <button onClick={handleSave} className={styles.saveBtn}>
-                    שמור
-                  </button>
-                </div>
+              <div>
+                {editingItem?.id && (
+                  <div className={styles.form}>
+                    <h3>עריכת סטטיסטיקות</h3>
+                    
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>מספר מתנדבים פעילים</label>
+                      <input
+                        type="number"
+                        placeholder="כמות מתנדבים"
+                        value={formData.volunteersCount || ''}
+                        onChange={(e) => setFormData({ ...formData, volunteersCount: e.target.value })}
+                      />
+                    </div>
+                    
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>קריאות חירום בשנה</label>
+                      <input
+                        type="number"
+                        placeholder="מספר קריאות"
+                        value={formData.emergencyCalls || ''}
+                        onChange={(e) => setFormData({ ...formData, emergencyCalls: e.target.value })}
+                      />
+                    </div>
+                    
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>זמן תגובה ממוצע (דקות)</label>
+                      <input
+                        type="number"
+                        placeholder="דקות"
+                        value={formData.averageResponseTime || ''}
+                        onChange={(e) => setFormData({ ...formData, averageResponseTime: e.target.value })}
+                      />
+                    </div>
+                    
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>זמינות מערכת (%)</label>
+                      <input
+                        type="number"
+                        placeholder="אחוזים 0-100"
+                        value={formData.uptime || ''}
+                        onChange={(e) => setFormData({ ...formData, uptime: e.target.value })}
+                      />
+                    </div>
+                    
+                    <div className={styles.formButtons}>
+                      <button onClick={handleSave} className={styles.saveBtn}>
+                        שמור שינויים
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEditingItem(null);
+                          setFormData({});
+                        }}
+                        className={styles.cancelBtn}
+                      >
+                        ביטול
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {!editingItem?.id && (
+                  <div className={styles.statisticsView}>
+                    <div className={styles.statCard}>
+                      <h4>מתנדבים פעילים</h4>
+                      <p className={styles.statValue}>{statistics.volunteersCount}</p>
+                    </div>
+                    
+                    <div className={styles.statCard}>
+                      <h4>קריאות חירום בשנה</h4>
+                      <p className={styles.statValue}>{statistics.emergencyCalls}</p>
+                    </div>
+                    
+                    <div className={styles.statCard}>
+                      <h4>זמן תגובה ממוצע</h4>
+                      <p className={styles.statValue}>{statistics.averageResponseTime} דקות</p>
+                    </div>
+                    
+                    <div className={styles.statCard}>
+                      <h4>זמינות מערכת</h4>
+                      <p className={styles.statValue}>{statistics.uptime}%</p>
+                    </div>
+                    
+                    {statistics.lastUpdated && (
+                      <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '1rem' }}>
+                        עדכון אחרון: {new Date(statistics.lastUpdated).toLocaleDateString('he-IL')}
+                      </p>
+                    )}
+                    
+                    <div className={styles.formButtons} style={{ marginTop: '1.5rem' }}>
+                      <button
+                        onClick={() => {
+                          setEditingItem(statistics);
+                          setFormData({
+                            volunteersCount: String(statistics.volunteersCount),
+                            emergencyCalls: String(statistics.emergencyCalls),
+                            averageResponseTime: String(statistics.averageResponseTime),
+                            uptime: String(statistics.uptime),
+                          });
+                        }}
+                        className={styles.editBtn}
+                      >
+                        ערוך סטטיסטיקות
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirm('בטוח שברצונך למחוק את כל הסטטיסטיקות?')) {
+                            handleDelete(statistics.id || '');
+                          }
+                        }}
+                        className={styles.deleteBtn}
+                      >
+                        מחק סטטיסטיקות
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

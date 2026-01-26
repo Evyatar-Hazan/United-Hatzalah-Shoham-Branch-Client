@@ -70,14 +70,21 @@ interface Donation {
   status: 'pending' | 'completed' | 'failed';
 }
 
+interface Donor {
+  id: string;
+  name: string;
+  category: string;
+  logo?: string;
+}
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-type EditingItem = GalleryItem | Story | Admin | Donation | Record<string, unknown> | null;
+type EditingItem = GalleryItem | Story | Admin | Donation | Donor | Record<string, unknown> | null;
 type FormDataType = Record<string, string | undefined>;
 
 const AdminPanel: React.FC = () => {
   const { user, token, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<'gallery' | 'stories' | 'statistics' | 'contact' | 'admins' | 'donations'>('gallery');
+  const [activeTab, setActiveTab] = useState<'gallery' | 'stories' | 'statistics' | 'contact' | 'admins' | 'donations' | 'sponsors'>('gallery');
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [stories, setStories] = useState<Story[]>([]);
   const [statistics, setStatistics] = useState<Statistics | null>(null);
@@ -86,6 +93,7 @@ const AdminPanel: React.FC = () => {
   const [contactSubTab, setContactSubTab] = useState<'messages' | 'info'>('messages');
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [donations, setDonations] = useState<Donation[]>([]);
+  const [sponsors, setSponsors] = useState<Donor[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingItem, setEditingItem] = useState<EditingItem>(null);
   const [formData, setFormData] = useState<FormDataType>({});
@@ -134,6 +142,10 @@ const AdminPanel: React.FC = () => {
         const response = await fetch(`${API_URL}/api/admin/donations`, { headers });
         const result = await response.json();
         if (result.success) setDonations(result.data || []);
+      } else if (activeTab === 'sponsors') {
+        const response = await fetch(`${API_URL}/api/admin/donors`, { headers });
+        const result = await response.json();
+        if (result.success) setSponsors(result.data || []);
       }
     } catch (error) {
       console.error('Failed to fetch data:', error);
@@ -181,6 +193,11 @@ const AdminPanel: React.FC = () => {
       } else if (activeTab === 'donations') {
         url = `${API_URL}/api/admin/donations/${editingItem.id}`;
         method = 'PUT';
+      } else if (activeTab === 'sponsors') {
+        url = editingItem.id
+          ? `${API_URL}/api/admin/donors/${editingItem.id}`
+          : `${API_URL}/api/admin/donors`;
+        method = editingItem.id ? 'PUT' : 'POST';
       }
 
       const response = await fetch(url, {
@@ -222,6 +239,8 @@ const AdminPanel: React.FC = () => {
         url = `${API_URL}/api/admin/admins/${id}`;
       } else if (activeTab === 'donations') {
         url = `${API_URL}/api/admin/donations/${id}`;
+      } else if (activeTab === 'sponsors') {
+        url = `${API_URL}/api/admin/donors/${id}`;
       }
 
       const response = await fetch(url, { method: 'DELETE', headers });
@@ -335,6 +354,12 @@ const AdminPanel: React.FC = () => {
         <button
           className={activeTab === 'donations' ? styles.active : ''}
           onClick={() => setActiveTab('donations')}
+        >
+          תורמים כספיים
+        </button>
+        <button
+          className={activeTab === 'sponsors' ? styles.active : ''}
+          onClick={() => setActiveTab('sponsors')}
         >
           תורמים וחסויות
         </button>
@@ -831,14 +856,14 @@ const AdminPanel: React.FC = () => {
 
         {activeTab === 'donations' && !loading && (
           <div className={styles.section}>
-            <h3>ניהול תורמים וחסויות</h3>
+            <h3>ניהול תורמים כספיים</h3>
             <div className={styles.adminsList}>
               <h3>רשימת תורמים ({donations.length})</h3>
               {donations.length === 0 ? (
                 <p className={styles.emptyState}>אין תורמים כרגע</p>
               ) : (
                 <div className={styles.grid}>
-                  {donations.map((donation) => (
+                  {donations.map((donation: Donation) => (
                     <div key={donation.id} className={styles.card}>
                       <div className={styles.adminHeader}>
                         <div>
@@ -915,6 +940,93 @@ const AdminPanel: React.FC = () => {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {activeTab === 'sponsors' && !loading && (
+          <div className={styles.section}>
+            <h3>ניהול תורמים וחסויות</h3>
+            <button
+              onClick={() => {
+                setEditingItem({ id: '', name: '', category: '' });
+                setFormData({ name: '', category: '' });
+              }}
+              className={styles.addBtn}
+            >
+              + הוסף תורם חדש
+            </button>
+
+            {editingItem && typeof editingItem === 'object' && 'category' in editingItem && (
+              <div className={styles.form}>
+                <h3>{editingItem.id ? 'עריכת תורם' : 'הוספת תורם חדש'}</h3>
+                <input
+                  type="text"
+                  placeholder="שם התורם/חברה"
+                  value={formData.name || ''}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                />
+                <input
+                  type="text"
+                  placeholder="קטגוריה (תורם, שותף, וכו')"
+                  value={formData.category || ''}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                />
+                <div className={styles.formButtons}>
+                  <button onClick={handleSave} className={styles.saveBtn}>
+                    שמור
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingItem(null);
+                      setFormData({});
+                    }}
+                    className={styles.cancelBtn}
+                  >
+                    ביטול
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className={styles.adminsList}>
+              <h3>רשימת תורמים ({sponsors.length})</h3>
+              {sponsors.length === 0 ? (
+                <p className={styles.emptyState}>אין תורמים כרגע</p>
+              ) : (
+                <div className={styles.grid}>
+                  {sponsors.map((sponsor: Donor) => (
+                    <div key={sponsor.id} className={styles.card}>
+                      <div className={styles.adminHeader}>
+                        <div>
+                          <h4>{sponsor.name}</h4>
+                          <p className={styles.adminEmail}>{sponsor.category}</p>
+                        </div>
+                      </div>
+                      <div className={styles.actions}>
+                        <button
+                          onClick={() => {
+                            setEditingItem(sponsor);
+                            setFormData({
+                              name: sponsor.name,
+                              category: sponsor.category,
+                            });
+                          }}
+                          className={styles.editBtn}
+                        >
+                          ערוך
+                        </button>
+                        <button
+                          onClick={() => handleDelete(sponsor.id)}
+                          className={styles.deleteBtn}
+                        >
+                          מחק
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

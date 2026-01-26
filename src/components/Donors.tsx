@@ -1,25 +1,41 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useScrollTrigger } from '../hooks/useScrollTrigger';
 import styles from './Donors.module.css';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 interface Donor {
-  id: number;
+  id: string;
   name: string;
   category: string;
+  logo?: string;
 }
-
-const donors: Donor[] = [
-  { id: 1, name: 'תורם אחד', category: 'תורם ראשי' },
-  { id: 2, name: 'תורם שני', category: 'תורם' },
-  { id: 3, name: 'תורם שלישי', category: 'תורם' },
-  { id: 4, name: 'תורם רביעי', category: 'תורם' },
-  { id: 5, name: 'תורם חמישי', category: 'תורם' },
-  { id: 6, name: 'תורם שישי', category: 'שותף' },
-];
 
 const Donors: React.FC = () => {
   const { ref, isVisible } = useScrollTrigger();
+  const [donors, setDonors] = useState<Donor[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDonors = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/admin/donors`);
+        const result = await response.json();
+        if (result.success && result.data) {
+          setDonors(result.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch donors:', error);
+        // Fallback to empty array if API fails
+        setDonors([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDonors();
+  }, []);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -41,6 +57,17 @@ const Donors: React.FC = () => {
     },
   };
 
+  if (loading) {
+    return (
+      <section ref={ref} className={`${styles.donors} section`}>
+        <div className="container">
+          <h2 className={styles.title}>תורמים וחסויות</h2>
+          <p style={{ textAlign: 'center', color: '#999' }}>טוען...</p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section ref={ref} className={`${styles.donors} section`}>
       <div className="container">
@@ -51,20 +78,24 @@ const Donors: React.FC = () => {
           initial="hidden"
           animate={isVisible ? 'visible' : 'hidden'}
         >
-          {donors.map((donor) => (
-            <motion.div
-              key={donor.id}
-              className={styles.donorCard}
-              variants={itemVariants}
-              whileHover={{ y: -4 }}
-            >
-              <div className={styles.logo}>
-                <span>{donor.name.charAt(0)}</span>
-              </div>
-              <h3 className={styles.name}>{donor.name}</h3>
-              <p className={styles.category}>{donor.category}</p>
-            </motion.div>
-          ))}
+          {donors.length === 0 ? (
+            <p style={{ textAlign: 'center', color: '#999', gridColumn: '1 / -1' }}>אין תורמים זמינים</p>
+          ) : (
+            donors.map((donor) => (
+              <motion.div
+                key={donor.id}
+                className={styles.donorCard}
+                variants={itemVariants}
+                whileHover={{ y: -4 }}
+              >
+                <div className={styles.logo}>
+                  <span>{donor.name.charAt(0)}</span>
+                </div>
+                <h3 className={styles.name}>{donor.name}</h3>
+                <p className={styles.category}>{donor.category}</p>
+              </motion.div>
+            ))
+          )}
         </motion.div>
       </div>
     </section>

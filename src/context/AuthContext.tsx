@@ -1,9 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 interface User {
+  id: string;
   email: string;
   name: string;
-  picture: string;
+  picture: string | null;
   isAdmin: boolean;
 }
 
@@ -46,18 +47,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (credential: string) => {
     try {
       // For Google OAuth, credential is the JWT ID token
-      // We need to send it to verify endpoint first to get user info
+      // Decode the JWT to extract user info
+      let email = '';
+      let name = '';
+      let picture = '';
+
+      // Try to decode JWT if it looks like a Google token
+      if (credential.includes('.') && credential.split('.').length === 3) {
+        try {
+          const payload = JSON.parse(atob(credential.split('.')[1]));
+          email = payload.email || '';
+          name = payload.name || '';
+          picture = payload.picture || '';
+        } catch {
+          // If decode fails, treat as email for mock login
+          email = credential;
+          name = credential.split('@')[0];
+          picture = '';
+        }
+      } else {
+        // Treat as email for mock login
+        email = credential;
+        name = credential.split('@')[0];
+        picture = '';
+      }
+
       const response = await fetch(`${API_URL}/api/auth/google-verify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        // Extract user info from Google JWT or send the credential for verification
-        // For now, treat credential as email for mock login
         body: JSON.stringify({ 
-          email: credential,
-          name: credential.split('@')[0],
-          picture: ''
+          email,
+          name,
+          picture,
         }),
       });
 

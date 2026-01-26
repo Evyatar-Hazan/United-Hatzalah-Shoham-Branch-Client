@@ -62,9 +62,11 @@ interface Admin {
   id: string;
   email: string;
   name: string;
-  picture?: string;
-  addedAt: string;
-  addedBy?: string;
+  picture: string | null;
+  isActive: boolean;
+  lastLogin: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface Donation {
@@ -92,7 +94,7 @@ type FormDataType = Record<string, string | undefined>;
 
 const AdminPanel: React.FC = () => {
   const { user, token, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<'gallery' | 'stories' | 'statistics' | 'contact' | 'admins' | 'donations' | 'sponsors'>('gallery');
+  const [activeTab, setActiveTab] = useState<'gallery' | 'stories' | 'statistics' | 'contact' | 'admins' | 'donations' | 'sponsors'>('admins');
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [stories, setStories] = useState<Story[]>([]);
   const [statistics, setStatistics] = useState<Statistics | null>(null);
@@ -145,6 +147,7 @@ const AdminPanel: React.FC = () => {
       } else if (activeTab === 'admins') {
         const response = await fetch(`${API_URL}/api/admin/admins`, { headers });
         const result = await response.json();
+        console.log('Admins response:', result);
         if (result.success) setAdmins(result.data || []);
       } else if (activeTab === 'donations') {
         const response = await fetch(`${API_URL}/api/admin/donations`, { headers });
@@ -163,7 +166,11 @@ const AdminPanel: React.FC = () => {
   }, [token, activeTab]);
 
   useEffect(() => {
-    if (!user?.isAdmin) return;
+    if (!user?.isAdmin) {
+      console.log('User is not admin:', user);
+      return;
+    }
+    console.log('Fetching data for tab:', activeTab);
     fetchData();
   }, [activeTab, user, token, fetchData]);
 
@@ -231,7 +238,24 @@ const AdminPanel: React.FC = () => {
   };
 
   const handleDelete = async (id: number | string) => {
-    if (!token || !confirm('בטוח שברצונך למחוק?')) return;
+    if (!token) return;
+
+    // Special handling for admins
+    if (activeTab === 'admins') {
+      // Check if trying to delete self
+      if (user?.id === id) {
+        alert('לא ניתן למחוק את עצמך');
+        return;
+      }
+      
+      // Check if this is the last admin
+      if (admins.length <= 1) {
+        alert('חייב להשאר לפחות אדמין אחד במערכת');
+        return;
+      }
+    }
+
+    if (!confirm('בטוח שברצונך למחוק?')) return;
 
     try {
       const headers = {
@@ -252,10 +276,13 @@ const AdminPanel: React.FC = () => {
       }
 
       const response = await fetch(url, { method: 'DELETE', headers });
+      const result = await response.json();
 
-      if (response.ok) {
+      if (response.ok && result.success) {
         alert('נמחק בהצלחה!');
         fetchData();
+      } else {
+        alert(`שגיאה: ${result.error || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Failed to delete:', error);
@@ -285,11 +312,19 @@ const AdminPanel: React.FC = () => {
 
       if (result.success && result.data) {
         // Set the uploaded image URL in the form
-        setFormData({
-          ...formData,
-          imageUrl: result.data.url,
-          cloudinaryId: result.data.publicId,
-        });
+        // For admins tab, use 'picture' field instead of 'imageUrl'
+        if (activeTab === 'admins') {
+          setFormData({
+            ...formData,
+            picture: result.data.url,
+          });
+        } else {
+          setFormData({
+            ...formData,
+            imageUrl: result.data.url,
+            cloudinaryId: result.data.publicId,
+          });
+        }
         alert('תמונה הועלתה בהצלחה!');
       } else {
         alert(`שגיאה בהעלאה: ${result.error}`);
@@ -319,9 +354,18 @@ const AdminPanel: React.FC = () => {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <div>
-          <h1>פאנל ניהול</h1>
-          <p>שלום, {user.name}</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          {user.picture && (
+            <img
+              src={user.picture}
+              alt={user.name}
+              style={{ width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover' }}
+            />
+          )}
+          <div>
+            <h1>פאנל ניהול</h1>
+            <p>שלום, {user.name}</p>
+          </div>
         </div>
         <button onClick={logout} className={styles.logoutBtn}>
           התנתק
@@ -329,6 +373,12 @@ const AdminPanel: React.FC = () => {
       </div>
 
       <div className={styles.tabs}>
+        <button
+          className={activeTab === 'admins' ? styles.active : ''}
+          onClick={() => setActiveTab('admins')}
+        >
+          ניהול אדמינים
+        </button>
         <button
           className={activeTab === 'gallery' ? styles.active : ''}
           onClick={() => setActiveTab('gallery')}
@@ -352,12 +402,6 @@ const AdminPanel: React.FC = () => {
           onClick={() => setActiveTab('contact')}
         >
           יצירת קשר
-        </button>
-        <button
-          className={activeTab === 'admins' ? styles.active : ''}
-          onClick={() => setActiveTab('admins')}
-        >
-          ניהול אדמינים
         </button>
         <button
           className={activeTab === 'donations' ? styles.active : ''}
@@ -783,12 +827,32 @@ const AdminPanel: React.FC = () => {
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
                 />
-                <input
-                  type="url"
-                  placeholder="קישור לתמונה (אופציונלי)"
-                  value={formData.picture || ''}
-                  onChange={(e) => setFormData({ ...formData, picture: e.target.value })}
-                />
+                
+                {/* Image Upload Section */}
+                <div className={styles.imageUploadSection}>
+                  <label>תמונת פרופיל (אופציונלי):</label>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    disabled={uploadingImage}
+                    style={{ display: 'block', marginBottom: '0.5rem' }}
+                  />
+                  {uploadingImage && <p style={{ color: '#f2561a' }}>מעלה תמונה...</p>}
+                </div>
+
+                {/* Display uploaded image */}
+                {formData.picture && (
+                  <div className={styles.imagePreview}>
+                    <img
+                      src={String(formData.picture)}
+                      alt="Admin Photo"
+                      style={{ maxWidth: '100px', maxHeight: '100px', borderRadius: '50%', objectFit: 'cover' }}
+                    />
+                  </div>
+                )}
+                
                 <div className={styles.formButtons}>
                   <button onClick={handleSave} className={styles.saveBtn}>
                     שמור
@@ -797,6 +861,9 @@ const AdminPanel: React.FC = () => {
                     onClick={() => {
                       setEditingItem(null);
                       setFormData({});
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = '';
+                      }
                     }}
                     className={styles.cancelBtn}
                   >
@@ -829,11 +896,11 @@ const AdminPanel: React.FC = () => {
                       </div>
                       <div className={styles.adminInfo}>
                         <p className={styles.adminDate}>
-                          נוסף ב: {new Date(admin.addedAt).toLocaleDateString('he-IL')}
+                          נוסף ב: {new Date(admin.createdAt).toLocaleDateString('he-IL')}
                         </p>
-                        {admin.addedBy && (
+                        {admin.lastLogin && (
                           <p className={styles.adminAddedBy}>
-                            על ידי: {admin.addedBy}
+                            ההתחברות האחרונה: {new Date(admin.lastLogin).toLocaleDateString('he-IL')}
                           </p>
                         )}
                       </div>
@@ -853,6 +920,13 @@ const AdminPanel: React.FC = () => {
                         </button>
                         <button
                           onClick={() => handleDelete(admin.id)}
+                          disabled={user?.id === admin.id || admins.length <= 1}
+                          style={{
+                            ...{},
+                            opacity: user?.id === admin.id || admins.length <= 1 ? 0.5 : 1,
+                            cursor: user?.id === admin.id || admins.length <= 1 ? 'not-allowed' : 'pointer'
+                          }}
+                          title={user?.id === admin.id ? 'לא ניתן למחוק את עצמך' : admins.length <= 1 ? 'חייב להשאר אדמין אחד לפחות' : 'מחק אדמין'}
                           className={styles.deleteBtn}
                         >
                           מחק

@@ -3,6 +3,14 @@ import { motion } from 'framer-motion';
 import { useScrollTrigger } from '../hooks/useScrollTrigger';
 import styles from './Statistics.module.css';
 
+interface StatItemApi {
+  id: string;
+  title: string;
+  value: number;
+  unit?: string | null;
+  order?: number;
+}
+
 interface StatisticItemProps {
   label: string;
   value: number;
@@ -56,33 +64,45 @@ const StatisticItem: React.FC<StatisticItemProps> = ({
 
 const Statistics: React.FC = () => {
   const { ref, isVisible } = useScrollTrigger({ threshold: 0.3 });
+  const [items, setItems] = useState<StatItemApi[]>([]);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const res = await fetch(`${apiUrl}/api/statistics`);
+        const json = await res.json();
+        if (json?.success && Array.isArray(json.data)) {
+          const sorted = [...(json.data as StatItemApi[])].sort(
+            (a, b) => (a.order ?? 0) - (b.order ?? 0)
+          );
+          setItems(sorted);
+        }
+      } catch (error) {
+        console.error('Failed to load statistics', error);
+      }
+    };
+
+    load();
+  }, []);
 
   return (
     <section ref={ref} className={`${styles.statistics} section`}>
       <div className="container">
         <h2 className={styles.title}>הנתונים שלנו</h2>
         <div className={styles.statsGrid}>
-          <StatisticItem
-            label="מתנדבים פעילים"
-            value={150}
-            isVisible={isVisible}
-          />
-          <StatisticItem
-            label="קריאות חירום שטופלו"
-            value={5000}
-            isVisible={isVisible}
-          />
-          <StatisticItem
-            label="זמן תגובה ממוצע"
-            value={5}
-            suffix=" דקות"
-            isVisible={isVisible}
-          />
-          <StatisticItem
-            label="שנים בשירות"
-            value={15}
-            isVisible={isVisible}
-          />
+          {(items.length > 0 ? items : [
+            { id: 'placeholder-1', title: 'מתנדבים פעילים', value: 0 },
+            { id: 'placeholder-2', title: 'קריאות חירום שטופלו', value: 0 },
+          ]).map((item) => (
+            <StatisticItem
+              key={item.id}
+              label={item.title}
+              value={item.value}
+              suffix={item.unit ? ` ${item.unit}` : ''}
+              isVisible={isVisible}
+            />
+          ))}
         </div>
       </div>
     </section>

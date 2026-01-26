@@ -21,13 +21,14 @@ interface Story {
   updatedAt?: string;
 }
 
-interface Statistics {
+interface StatItem {
   id?: string;
-  volunteersCount: number;
-  emergencyCalls: number;
-  averageResponseTime: number;
-  uptime: number;
-  lastUpdated?: string;
+  title: string;
+  value: number;
+  unit?: string | null;
+  order?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface ContactMessage {
@@ -89,7 +90,7 @@ interface Donor {
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-type EditingItem = GalleryItem | Story | Admin | Donation | Donor | Record<string, unknown> | null;
+type EditingItem = GalleryItem | Story | Admin | Donation | Donor | StatItem | Record<string, unknown> | null;
 type FormDataType = Record<string, string | undefined>;
 
 const AdminPanel: React.FC = () => {
@@ -97,7 +98,7 @@ const AdminPanel: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'gallery' | 'stories' | 'statistics' | 'contact' | 'admins' | 'donations' | 'sponsors'>('admins');
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [stories, setStories] = useState<Story[]>([]);
-  const [statistics, setStatistics] = useState<Statistics | null>(null);
+  const [statItems, setStatItems] = useState<StatItem[]>([]);
   const [contactMessages, setContactMessages] = useState<ContactMessage[]>([]);
   const [contactInfo, setContactInfo] = useState<ContactInfo | null>(null);
   const [contactSubTab, setContactSubTab] = useState<'messages' | 'info'>('messages');
@@ -129,9 +130,9 @@ const AdminPanel: React.FC = () => {
         const result = await response.json();
         if (result.success) setStories(result.data || []);
       } else if (activeTab === 'statistics') {
-        const response = await fetch(`${API_URL}/api/admin/statistics`, { headers });
+        const response = await fetch(`${API_URL}/api/admin/stat-items`, { headers });
         const result = await response.json();
-        if (result.success) setStatistics(result.data);
+        if (result.success) setStatItems(result.data || []);
       } else if (activeTab === 'contact') {
         // Fetch both contact messages and contact info
         const [messagesResponse, infoResponse] = await Promise.all([
@@ -185,17 +186,18 @@ const AdminPanel: React.FC = () => {
 
       let url = '';
       let method: 'PUT' | 'POST' = 'PUT';
-          let body: Record<string, unknown> = formData;
+      let body: Record<string, unknown> = formData;
 
-        // Convert formData to proper types for statistics
-        if (activeTab === 'statistics') {
-          body = {
-            volunteersCount: parseInt(formData.volunteersCount || '0'),
-            emergencyCalls: parseInt(formData.emergencyCalls || '0'),
-            averageResponseTime: parseInt(formData.averageResponseTime || '0'),
-            uptime: parseFloat(formData.uptime || '0'),
-          };
-        }
+      if (activeTab === 'statistics') {
+        const parsedValue = parseFloat(formData.value || '0');
+        const parsedOrder = formData.order ? parseInt(formData.order, 10) : 0;
+        body = {
+          title: formData.title || '',
+          value: Number.isFinite(parsedValue) ? parsedValue : 0,
+          unit: formData.unit || undefined,
+          order: Number.isFinite(parsedOrder) ? parsedOrder : 0,
+        };
+      }
 
       if (activeTab === 'gallery') {
         url = editingItem.id
@@ -208,8 +210,11 @@ const AdminPanel: React.FC = () => {
           : `${API_URL}/api/admin/stories`;
         method = editingItem.id ? 'PUT' : 'POST';
       } else if (activeTab === 'statistics') {
-        url = `${API_URL}/api/admin/statistics`;
-        method = 'PUT';
+        const isEdit = Boolean((editingItem as StatItem)?.id);
+        url = isEdit
+          ? `${API_URL}/api/admin/stat-items/${(editingItem as StatItem).id}`
+          : `${API_URL}/api/admin/stat-items`;
+        method = isEdit ? 'PUT' : 'POST';
       } else if (activeTab === 'admins') {
         url = editingItem.id
           ? `${API_URL}/api/admin/admins/${editingItem.id}`
@@ -280,7 +285,7 @@ const AdminPanel: React.FC = () => {
       } else if (activeTab === 'admins') {
         url = `${API_URL}/api/admin/admins/${id}`;
         } else if (activeTab === 'statistics') {
-          url = `${API_URL}/api/admin/statistics/${id}`;
+          url = `${API_URL}/api/admin/stat-items/${id}`;
       } else if (activeTab === 'donations') {
         url = `${API_URL}/api/admin/donations/${id}`;
       } else if (activeTab === 'sponsors') {
@@ -629,146 +634,109 @@ const AdminPanel: React.FC = () => {
 
         {activeTab === 'statistics' && !loading && (
           <div className={styles.section}>
-            <h3>ניהול סטטיסטיקות</h3>
-            
-            {!statistics ? (
-              <div>
-                <p className={styles.emptyState}>אין סטטיסטיקות זמינות</p>
-                <button
-                  onClick={() => {
-                    setEditingItem({});
-                    setFormData({
-                      volunteersCount: '0',
-                      emergencyCalls: '0',
-                      averageResponseTime: '0',
-                      uptime: '0',
-                    });
-                  }}
-                  className={styles.addBtn}
-                  style={{ marginTop: '1rem' }}
-                >
-                  + צור סטטיסטיקות חדשות
-                </button>
-              </div>
-            ) : (
-              <div>
-                {editingItem?.id && (
-                  <div className={styles.form}>
-                    <h3>עריכת סטטיסטיקות</h3>
-                    
-                    <div style={{ marginBottom: '1rem' }}>
-                      <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>מספר מתנדבים פעילים</label>
-                      <input
-                        type="number"
-                        placeholder="כמות מתנדבים"
-                        value={formData.volunteersCount || ''}
-                        onChange={(e) => setFormData({ ...formData, volunteersCount: e.target.value })}
-                      />
-                    </div>
-                    
-                    <div style={{ marginBottom: '1rem' }}>
-                      <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>קריאות חירום בשנה</label>
-                      <input
-                        type="number"
-                        placeholder="מספר קריאות"
-                        value={formData.emergencyCalls || ''}
-                        onChange={(e) => setFormData({ ...formData, emergencyCalls: e.target.value })}
-                      />
-                    </div>
-                    
-                    <div style={{ marginBottom: '1rem' }}>
-                      <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>זמן תגובה ממוצע (דקות)</label>
-                      <input
-                        type="number"
-                        placeholder="דקות"
-                        value={formData.averageResponseTime || ''}
-                        onChange={(e) => setFormData({ ...formData, averageResponseTime: e.target.value })}
-                      />
-                    </div>
-                    
-                    <div style={{ marginBottom: '1rem' }}>
-                      <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>זמינות מערכת (%)</label>
-                      <input
-                        type="number"
-                        placeholder="אחוזים 0-100"
-                        value={formData.uptime || ''}
-                        onChange={(e) => setFormData({ ...formData, uptime: e.target.value })}
-                      />
-                    </div>
-                    
-                    <div className={styles.formButtons}>
-                      <button onClick={handleSave} className={styles.saveBtn}>
-                        שמור שינויים
-                      </button>
-                      <button
-                        onClick={() => {
-                          setEditingItem(null);
-                          setFormData({});
-                        }}
-                        className={styles.cancelBtn}
-                      >
-                        ביטול
-                      </button>
-                    </div>
-                  </div>
-                )}
+            <h3>ניהול סטטיסטיקות (כל נתון בנפרד)</h3>
 
-                {!editingItem?.id && (
-                  <div className={styles.statisticsView}>
-                    <div className={styles.statCard}>
-                      <h4>מתנדבים פעילים</h4>
-                      <p className={styles.statValue}>{statistics.volunteersCount}</p>
+            <button
+              onClick={() => {
+                setEditingItem({});
+                setFormData({ title: '', value: '0', unit: '', order: String(statItems.length + 1) });
+              }}
+              className={styles.addBtn}
+            >
+              + הוסף נתון סטטיסטי
+            </button>
+
+            {editingItem && activeTab === 'statistics' && (
+              <div className={styles.form}>
+                <h3>{(editingItem as StatItem)?.id ? 'עריכת נתון' : 'נתון חדש'}</h3>
+
+                <input
+                  type="text"
+                  placeholder="כותרת (לדוגמה: מתנדבים פעילים)"
+                  value={formData.title || ''}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                />
+
+                <input
+                  type="number"
+                  placeholder="ערך מספרי"
+                  value={formData.value || ''}
+                  onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+                />
+
+                <input
+                  type="text"
+                  placeholder="יחידה (אופציונלי, למשל דקות / % )"
+                  value={formData.unit || ''}
+                  onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                />
+
+                <input
+                  type="number"
+                  placeholder="סדר תצוגה (מספר קטן יוצג ראשון)"
+                  value={formData.order || ''}
+                  onChange={(e) => setFormData({ ...formData, order: e.target.value })}
+                />
+
+                <div className={styles.formButtons}>
+                  <button onClick={handleSave} className={styles.saveBtn}>
+                    שמור
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingItem(null);
+                      setFormData({});
+                    }}
+                    className={styles.cancelBtn}
+                  >
+                    ביטול
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {statItems.length === 0 && !editingItem && (
+              <p className={styles.emptyState}>אין נתונים. הוסף פריט סטטיסטיקה ראשון.</p>
+            )}
+
+            {statItems.length > 0 && (
+              <div className={styles.statisticsView}>
+                {statItems.map((item) => (
+                  <div key={item.id} className={styles.statCard}>
+                    <div className={styles.statCardHeader}>
+                      <h4>{item.title}</h4>
+                      {typeof item.order === 'number' && (
+                        <span className={styles.statOrder}>#{item.order}</span>
+                      )}
                     </div>
-                    
-                    <div className={styles.statCard}>
-                      <h4>קריאות חירום בשנה</h4>
-                      <p className={styles.statValue}>{statistics.emergencyCalls}</p>
+                    <div className={styles.statValueRow}>
+                      <span className={styles.statValue}>{item.value}</span>
+                      {item.unit && <span className={styles.statUnit}>{item.unit}</span>}
                     </div>
-                    
-                    <div className={styles.statCard}>
-                      <h4>זמן תגובה ממוצע</h4>
-                      <p className={styles.statValue}>{statistics.averageResponseTime} דקות</p>
-                    </div>
-                    
-                    <div className={styles.statCard}>
-                      <h4>זמינות מערכת</h4>
-                      <p className={styles.statValue}>{statistics.uptime}%</p>
-                    </div>
-                    
-                    {statistics.lastUpdated && (
-                      <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '1rem' }}>
-                        עדכון אחרון: {new Date(statistics.lastUpdated).toLocaleDateString('he-IL')}
-                      </p>
-                    )}
-                    
-                    <div className={styles.formButtons} style={{ marginTop: '1.5rem' }}>
+                    <div className={styles.itemButtons}>
                       <button
                         onClick={() => {
-                          setEditingItem(statistics);
+                          setEditingItem(item);
                           setFormData({
-                            volunteersCount: String(statistics.volunteersCount),
-                            emergencyCalls: String(statistics.emergencyCalls),
-                            averageResponseTime: String(statistics.averageResponseTime),
-                            uptime: String(statistics.uptime),
+                            title: item.title,
+                            value: String(item.value),
+                            unit: item.unit || '',
+                            order: item.order !== undefined ? String(item.order) : '',
                           });
                         }}
                         className={styles.editBtn}
                       >
-                        ערוך סטטיסטיקות
+                        עריכה
                       </button>
                       <button
-                        onClick={() => {
-                          if (confirm('בטוח שברצונך למחוק את כל הסטטיסטיקות?')) {
-                            handleDelete(statistics.id || '');
-                          }
-                        }}
+                        onClick={() => item.id && handleDelete(item.id)}
                         className={styles.deleteBtn}
                       >
-                        מחק סטטיסטיקות
+                        מחיקה
                       </button>
                     </div>
                   </div>
-                )}
+                ))}
               </div>
             )}
           </div>

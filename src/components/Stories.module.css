@@ -14,29 +14,37 @@
   border-radius: 1rem;
   padding: 3rem;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  overflow-x: hidden;
 }
 
 .storyCard {
   min-height: 300px;
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  flex-direction: row;
+  align-items: flex-start;
   justify-content: center;
-  gap: 1.5rem;
+  gap: 2rem;
 }
 
 .storyImage {
   width: 100%;
-  max-width: 500px;
+  max-width: 400px;
   height: auto;
   max-height: 350px;
   object-fit: cover;
   border-radius: 0.75rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
 }
 
 .storyContent {
-  text-align: center;
+  text-align: right;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding-top: 1rem;
 }
 
 .storyTitle {
@@ -50,9 +58,10 @@
   color: #1a1a18;
   line-height: 1.8;
   margin-bottom: 1.5rem;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
+  max-width: 100%;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 
 .storyDate {
@@ -128,7 +137,19 @@
   }
 
   .storyCard {
-    min-height: 250px;
+    min-height: auto;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .storyImage {
+    max-width: 100%;
+  }
+
+  .storyContent {
+    text-align: center;
+    padding-top: 0;
   }
 
   .storyTitle {
@@ -150,7 +171,16 @@
   }
 
   .storyCard {
-    min-height: 200px;
+    min-height: auto;
+    flex-direction: column;
+  }
+
+  .storyImage {
+    max-width: 100%;
+  }
+
+  .storyContent {
+    text-align: center;
   }
 
   .storyTitle {

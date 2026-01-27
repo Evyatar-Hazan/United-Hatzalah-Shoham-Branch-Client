@@ -188,7 +188,13 @@ const AdminPanel: React.FC = () => {
       let method: 'PUT' | 'POST' = 'PUT';
       let body: Record<string, unknown> = formData;
 
-      if (activeTab === 'statistics') {
+      if (activeTab === 'gallery') {
+        body = {
+          title: formData.title || '',
+          category: formData.category || '',
+          imageUrl: formData.imageUrl || '',
+        };
+      } else if (activeTab === 'statistics') {
         const parsedValue = parseFloat(formData.value || '0');
         const parsedOrder = formData.order ? parseInt(formData.order, 10) : 0;
         body = {
@@ -502,14 +508,6 @@ const AdminPanel: React.FC = () => {
                     <small>URL: {String(formData.imageUrl).substring(0, 50)}...</small>
                   </div>
                 )}
-
-                {/* Fallback: Manual URL input */}
-                <input
-                  type="text"
-                  placeholder="או הכנס URL ידני"
-                  value={formData.imageUrl || ''}
-                  onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                />
                 
                 <div className={styles.formButtons}>
                   <button onClick={handleSave} className={styles.saveBtn}>

@@ -31,8 +31,8 @@
 .itemImage {
   position: relative;
   width: 100%;
-  padding-bottom: 75%;
-  background: linear-gradient(135deg, #f2561a 0%, #ff6b35 100%);
+  padding-bottom: 66%;
+  background: #f0f0f0;
   overflow: hidden;
   height: 0;
 }
@@ -59,8 +59,8 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #f2561a 0%, #ff6b35 100%);
-  opacity: 0.2;
+  background: #f0f0f0;
+  opacity: 0.3;
   animation: shimmer 2s infinite;
 }
 
